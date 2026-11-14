@@ -1,0 +1,50 @@
+spring:
+  application:
+    name: user-service
+  config:
+    import: "optional:file:./config-repo/"
+  datasource:
+    url: jdbc:h2:mem:testdb;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE
+    username: sa
+    password: 
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+    show-sql: false
+  h2:
+    console:
+      enabled: false
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 5MB
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+    listener:
+      simple:
+        auto-startup: false
+
+app:
+  jwt:
+    secret: test_jwt_secret_minimum_32_characters_for_testing_purposes_only
+  aws:
+    access-key: test-access-key
+    secret-key: test-secret-key
+    region: eu-west-3
+    bucket-name: test-bucket
+
+server:
+  port: 0
+
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
