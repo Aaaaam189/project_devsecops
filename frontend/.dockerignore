@@ -1,7 +1,10 @@
 **/.classpath
 **/.dockerignore
+**/.env
+**/.env.*
 **/.git
 **/.gitignore
+**/.next
 **/.project
 **/.settings
 **/.toolstarget

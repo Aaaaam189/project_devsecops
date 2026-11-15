@@ -26,8 +26,13 @@ FROM node:20-alpine AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
+# Next.js standalone's server.js binds to this host. Without it, it only
+# binds to the container's eth0 address, not 127.0.0.1/localhost, so any
+# healthcheck or probe run from inside the container (wget localhost:3000)
+# fails even though the app is reachable from outside the container.
+ENV HOSTNAME=0.0.0.0
 
-RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+RUN addgroup -g 10001 -S appgroup && adduser -u 10001 -S appuser -G appgroup
 
 COPY --from=build /app/next.config.mjs ./
 COPY --from=build /app/public ./public
@@ -40,6 +45,6 @@ USER appuser
 EXPOSE 3000
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:3000 || exit 1
+  CMD ["wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:3000"]
 
 CMD ["node", "server.js"]

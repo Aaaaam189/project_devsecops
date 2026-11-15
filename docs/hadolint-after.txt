@@ -1,0 +1,31 @@
+Hadolint "after" evidence — Phase 1, item 3 (Dockerfiles)
+
+Fixes applied to all nine Dockerfiles:
+  - DL3025: HEALTHCHECK's CMD clause rewritten as a JSON array
+    (was a shell string: wget --no-verbose ... || exit 1)
+  - DL3066: addgroup/adduser now pin a fixed numeric UID/GID (10001),
+    silenced via .hadolint.yaml (see that file for the reason — USER
+    still references the account by name, not by number, for readable
+    `docker exec`/`docker top` output; the UID underneath is fixed).
+
+Also fixed while here (not a Hadolint finding, found during manual review):
+  - infrastructure/config-server/Dockerfile: EXPOSE and HEALTHCHECK pointed
+    at port 8088, but the app binds to 8888 (server.port in
+    application.yaml, and docker-compose.yml's 8888:8888 mapping). Fixed
+    to 8888.
+
+Tool: hadolint/hadolint:latest (Docker image), with .hadolint.yaml applied
+Command used per file:
+  Get-Content <file> -Raw | docker run --rm -i -v "${PWD}/.hadolint.yaml:/.hadolint.yaml" hadolint/hadolint hadolint -c /.hadolint.yaml -
+
+Result: no findings on any of the nine Dockerfiles.
+
+  services/auth-service/Dockerfile            -> clean
+  services/user-service/Dockerfile            -> clean
+  services/startup-service/Dockerfile         -> clean
+  services/post-service/Dockerfile            -> clean
+  services/notification-service/Dockerfile    -> clean
+  services/chat-service/Dockerfile            -> clean
+  frontend/Dockerfile                         -> clean
+  infrastructure/api-gateway/Dockerfile       -> clean
+  infrastructure/config-server/Dockerfile     -> clean

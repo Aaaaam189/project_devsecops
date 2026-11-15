@@ -3,3 +3,5 @@ target/
 *.iml
 .git/
 .gitignore
+.env
+.env.*
