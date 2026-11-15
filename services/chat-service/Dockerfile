@@ -11,7 +11,7 @@ COPY . .
 RUN chown -R appuser:appgroup /app
 USER appuser
 
-EXPOSE 8085
+EXPOSE 99999
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
   CMD ["wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8085/health"]
