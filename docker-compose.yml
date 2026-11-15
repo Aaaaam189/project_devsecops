@@ -39,17 +39,18 @@ services:
 
   rabbitmq:
     image: rabbitmq:3-management-alpine
-    container_name: rabbitmq
+    container_name: rabbitmq-foundersync
     ports:
       - "5672:5672"
       - "15672:15672"
     networks:
       - foundersync-network
     healthcheck:
-      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
       interval: 10s
-      timeout: 5s
-      retries: 5
+      timeout: 15s
+      retries: 10
+      start_period: 90s
 
   # ──────────────────────────────────────────
   # INFRASTRUCTURE
@@ -88,7 +89,7 @@ services:
       POST_SERVICE_URL: http://post-service:8084
       CHAT_SERVICE_URL: http://chat-service:8085
       NOTIFICATION_SERVICE_URL: http://notification-service:8086
-      CORS_ALLOWED_ORIGINS: http://13.39.180.127:3000,http://localhost:3000,http://localhost:4200
+      CORS_ALLOWED_ORIGINS: http://localhost:3000,http://localhost:3001,http://localhost:4200
     ports:
       - "8080:8080"
     networks:
@@ -122,9 +123,9 @@ services:
       MAIL_PASSWORD: ${MAIL_PASSWORD:-}
       ADMIN_USERNAME: ${ADMIN_USERNAME:-admin@foundersync.com}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin123}
-      AWS_ACCESS_KEY: ${USER_AWS_ACCESS_KEY:-}
-      AWS_SECRET_KEY: ${USER_AWS_SECRET_KEY:-}
-      AWS_BUCKET_NAME: ${USER_AWS_BUCKET_NAME:-}
+      AWS_ACCESS_KEY: ${USER_AWS_ACCESS_KEY:-dummy-access-key}
+      AWS_SECRET_KEY: ${USER_AWS_SECRET_KEY:-dummy-secret-key}
+      AWS_BUCKET_NAME: ${USER_AWS_BUCKET_NAME:-founderssync-uploads}
     ports:
       - "8081:8081"
     networks:
@@ -138,7 +139,9 @@ services:
         condition: service_healthy
 
   user-service:
-    build: ./services/user-service
+    build:
+      context: ./services/user-service
+      network: host
     container_name: user-service
     restart: on-failure
     environment:
@@ -150,9 +153,9 @@ services:
       DB_USERNAME: ${DB_USERNAME:-postgres}
       DB_PASSWORD: ${DB_PASSWORD:-postgres}
       JWT_SECRET: ${JWT_SECRET:-founderssync_jwt_secret_minimum_32_characters_ok}
-      AWS_ACCESS_KEY: ${USER_AWS_ACCESS_KEY:-}
-      AWS_SECRET_KEY: ${USER_AWS_SECRET_KEY:-}
-      AWS_BUCKET_NAME: ${USER_AWS_BUCKET_NAME:-}
+      AWS_ACCESS_KEY: ${USER_AWS_ACCESS_KEY:-dummy-access-key}
+      AWS_SECRET_KEY: ${USER_AWS_SECRET_KEY:-dummy-secret-key}
+      AWS_BUCKET_NAME: ${USER_AWS_BUCKET_NAME:-founderssync-uploads}
     ports:
       - "8082:8082"
     networks:
@@ -177,9 +180,9 @@ services:
       SPRING_RABBITMQ_HOST: rabbitmq
       DB_USERNAME: ${DB_USERNAME:-postgres}
       DB_PASSWORD: ${DB_PASSWORD:-postgres}
-      AWS_ACCESS_KEY: ${STARTUP_AWS_ACCESS_KEY:-}
-      AWS_SECRET_KEY: ${STARTUP_AWS_SECRET_KEY:-}
-      AWS_BUCKET_NAME: ${STARTUP_AWS_BUCKET_NAME:-}
+      AWS_ACCESS_KEY: ${STARTUP_AWS_ACCESS_KEY:-dummy-access-key}
+      AWS_SECRET_KEY: ${STARTUP_AWS_SECRET_KEY:-dummy-secret-key}
+      AWS_BUCKET_NAME: ${STARTUP_AWS_BUCKET_NAME:-founderssync-uploads}
     ports:
       - "8083:8083"
     networks:
@@ -204,9 +207,9 @@ services:
       SPRING_RABBITMQ_HOST: rabbitmq
       DB_USERNAME: ${DB_USERNAME:-postgres}
       DB_PASSWORD: ${DB_PASSWORD:-postgres}
-      AWS_ACCESS_KEY: ${POST_AWS_ACCESS_KEY:-}
-      AWS_SECRET_KEY: ${POST_AWS_SECRET_KEY:-}
-      AWS_BUCKET_NAME: ${POST_AWS_BUCKET_NAME:-}
+      AWS_ACCESS_KEY: ${POST_AWS_ACCESS_KEY:-dummy-access-key}
+      AWS_SECRET_KEY: ${POST_AWS_SECRET_KEY:-dummy-secret-key}
+      AWS_BUCKET_NAME: ${POST_AWS_BUCKET_NAME:-founderssync-uploads}
       USER_SERVICE_URL: http://user-service:8082
     ports:
       - "8084:8084"
@@ -275,12 +278,12 @@ services:
      build:
        context: ./frontend
        args:
-         NEXT_PUBLIC_HOST_GATEWAY_API_URL: http://13.39.180.127:8080
-         NEXT_PUBLIC_SERVER_URL: http://13.39.180.127:8080
-         NEXT_PUBLIC_ASSET_URL: http://13.39.180.127:8080
+         NEXT_PUBLIC_HOST_GATEWAY_API_URL: http://localhost:8080
+         NEXT_PUBLIC_SERVER_URL: http://localhost:8080
+         NEXT_PUBLIC_ASSET_URL: http://localhost:8080
      container_name: frontend
      ports:
-       - "3000:3000"
+       - "3001:3000"
 # ──────────────────────────────────────────
 # VOLUMES & NETWORKS
 # ──────────────────────────────────────────

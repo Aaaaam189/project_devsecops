@@ -23,7 +23,7 @@ app:
   jwt:
     secret: ${JWT_SECRET:founderssync_jwt_secret_minimum_32_characters_ok}
   aws:
-    access-key: ${AWS_ACCESS_KEY}
-    secret-key: ${AWS_SECRET_KEY}
+    access-key: ${AWS_ACCESS_KEY:dummy-access-key}
+    secret-key: ${AWS_SECRET_KEY:dummy-secret-key}
     region: eu-west-3
     bucket-name: founderssync-uploads
