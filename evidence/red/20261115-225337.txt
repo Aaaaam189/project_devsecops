@@ -1,0 +1,38 @@
+Attack suite run: 20261115-225337
+Mode: red
+Target: localhost (gateway :8080, and published service/db/broker ports)
+============================================================
+
+---- attack-authz.sh ----
+Victim (A)   userId: fe1b6d7b-76df-4033-93b5-a34aa629fb9c
+Attacker (B) userId: 21915e94-028c-47c4-9010-c2a84e95d180
+
+[ATTACK] read-any-notifications-no-token (status 200) -> SUCCEEDED
+[ATTACK] impersonate-and-post-as-victim (status 201, post created with victim's userId) -> SUCCEEDED
+[ATTACK] delete-another-users-profile-no-token (before=200, delete=204, after=404) -> SUCCEEDED
+(exit code: 1)
+
+---- attack-credentials.sh ----
+[ATTACK] rabbitmq-management-guest-guest (status 200) -> SUCCEEDED
+[ATTACK] rabbitmq-broker-guest-guest (AMQP connect + queue declare succeeded) -> SUCCEEDED
+[ATTACK] postgres-weak-password (password 'postgres' worked) -> SUCCEEDED
+[ATTACK] mongodb-no-auth-read-messages (read 1 message(s) with zero credentials) -> SUCCEEDED
+(exit code: 1)
+
+---- attack-network.sh ----
+[ATTACK] config-server-leaks-jwt-secret ("app.jwt.secret":"${JWT_SECRET:founderssync_jwt_secret_minimum_32_characters_ok}") -> SUCCEEDED
+[ATTACK] direct-port-bypass-gateway (status 401, service reachable without going through :8080) -> SUCCEEDED
+[ATTACK] wrong-caller-throwaway-container (status 401, reached startup-service directly by name) -> SUCCEEDED
+(exit code: 1)
+
+---- attack-forged-token.sh ----
+Victim userId: 368c4dc0-e7c4-4ded-b4dc-0b04a926b429 (forge-victim-1794783228-1704@test.com)
+
+[ATTACK] forged-token-random-secret-control (status 500) -> BLOCKED
+[ATTACK] forged-token-real-secret-privilege-escalation (status 200, self-signed ADMIN token accepted) -> SUCCEEDED (expected, documented residual risk)
+[ATTACK] forged-token-real-secret-account-takeover (status 200, minted a valid token for a real account with no password) -> SUCCEEDED (expected, documented residual risk)
+(exit code: 0)
+
+============================================================
+Summary: 1 blocked, 12 succeeded (2 of those are the documented residual risk)
+RESULT: FAIL (an attack succeeded that is not on the documented residual-risk list)
