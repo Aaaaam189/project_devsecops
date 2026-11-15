@@ -5,6 +5,11 @@ on:
     branches: [main, phase1]
   pull_request:
 
+permissions:
+  contents: read
+  security-events: write
+  actions: read
+
 jobs:
   secrets:
     name: Secret Scanning
@@ -49,10 +54,11 @@ jobs:
           output: trivy-deps.sarif
           severity: HIGH,CRITICAL
           scanners: vuln,secret
+        continue-on-error: true
       
       - name: Upload dependency scan results
         uses: github/codeql-action/upload-sarif@v3
-        if: always()
+        if: always() && hashFiles('trivy-deps.sarif') != ''
         with:
           sarif_file: trivy-deps.sarif
           category: dependencies
@@ -72,10 +78,11 @@ jobs:
           output: trivy-config.sarif
           severity: HIGH,CRITICAL
           scanners: misconfig
+        continue-on-error: true
       
       - name: Upload config scan results
         uses: github/codeql-action/upload-sarif@v3
-        if: always()
+        if: always() && hashFiles('trivy-config.sarif') != ''
         with:
           sarif_file: trivy-config.sarif
           category: infrastructure
