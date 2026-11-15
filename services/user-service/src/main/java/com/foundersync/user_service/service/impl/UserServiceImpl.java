@@ -10,6 +10,7 @@ import com.foundersync.user_service.service.StorageService;
 import com.foundersync.user_service.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -115,15 +116,31 @@ public class UserServiceImpl implements UserService {
         String email = jwtUtil.extractEmail(authHeader);
         return userProfileRepository.findByUserId(userId)
                 .map(this::toResponse)
-                .orElseGet(() -> {
-                    log.warn("Profile not found for userId: {} — auto-creating", userId);
-                    UserProfile profile = UserProfile.builder()
-                            .userId(userId)
-                            .email(email)
-                            .build();
-                    userProfileRepository.save(profile);
-                    return toResponse(profile);
-                });
+                .orElseGet(() -> createProfileOrFetchExisting(userId, email));
+    }
+
+    // The profile is normally created asynchronously by UserEventListener
+    // when auth-service publishes "user registered". If /me is called
+    // before that listener has run, findByUserId above returns empty and we
+    // try to create the profile ourselves. If the listener's insert lands
+    // at the same time, the unique constraint on user_id rejects our insert
+    // with a DataIntegrityViolationException — that's not a real error, it
+    // just means the profile now exists, so we re-fetch it instead of
+    // letting the request fail with a 500.
+    private UserProfileResponse createProfileOrFetchExisting(UUID userId, String email) {
+        try {
+            UserProfile profile = UserProfile.builder()
+                    .userId(userId)
+                    .email(email)
+                    .build();
+            userProfileRepository.save(profile);
+            return toResponse(profile);
+        } catch (DataIntegrityViolationException e) {
+            log.info("Profile for userId: {} was created concurrently, re-fetching", userId);
+            return userProfileRepository.findByUserId(userId)
+                    .map(this::toResponse)
+                    .orElseThrow(() -> e);
+        }
     }
 
     @Override
