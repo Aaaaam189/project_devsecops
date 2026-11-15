@@ -1,0 +1,58 @@
+spring:
+  application:
+    name: auth-service
+  config:
+    import: "optional:file:./config-repo/"
+  datasource:
+    url: jdbc:h2:mem:testdb;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE
+    username: sa
+    password: 
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+    show-sql: false
+  h2:
+    console:
+      enabled: false
+  mail:
+    host: smtp.example.com
+    port: 587
+    username: test@example.com
+    password: testpassword
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+    listener:
+      simple:
+        auto-startup: false
+
+app:
+  jwt:
+    secret: test_jwt_secret_minimum_32_characters_for_testing_purposes_only
+    expiration: 86400000
+    refresh-expiration: 604800000
+  frontend-url: http://localhost:3000
+  admin:
+    email: admin@test.com
+    password: Admin123!
+
+server:
+  port: 0
+
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
