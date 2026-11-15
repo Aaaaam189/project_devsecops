@@ -39,36 +39,36 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # STEP 1 OF THE ROLLOUT: only auth-service is enabled while we
-          # validate the pipeline end to end. The other 8 are listed but
-          # commented out — uncomment once auth-service goes green.
+          # Full rollout: all 9 services, each mapped explicitly to its
+          # own folder and Dockerfile. auth-service was validated alone
+          # first; the other 8 follow the same pattern.
           - name: auth-service
             context: services/auth-service
             dockerfile: services/auth-service/Dockerfile
-          # - name: user-service
-          #   context: services/user-service
-          #   dockerfile: services/user-service/Dockerfile
-          # - name: startup-service
-          #   context: services/startup-service
-          #   dockerfile: services/startup-service/Dockerfile
-          # - name: post-service
-          #   context: services/post-service
-          #   dockerfile: services/post-service/Dockerfile
-          # - name: notification-service
-          #   context: services/notification-service
-          #   dockerfile: services/notification-service/Dockerfile
-          # - name: chat-service
-          #   context: services/chat-service
-          #   dockerfile: services/chat-service/Dockerfile
-          # - name: frontend
-          #   context: frontend
-          #   dockerfile: frontend/Dockerfile
-          # - name: api-gateway
-          #   context: infrastructure/api-gateway
-          #   dockerfile: infrastructure/api-gateway/Dockerfile
-          # - name: config-server
-          #   context: infrastructure/config-server
-          #   dockerfile: infrastructure/config-server/Dockerfile
+          - name: user-service
+            context: services/user-service
+            dockerfile: services/user-service/Dockerfile
+          - name: startup-service
+            context: services/startup-service
+            dockerfile: services/startup-service/Dockerfile
+          - name: post-service
+            context: services/post-service
+            dockerfile: services/post-service/Dockerfile
+          - name: notification-service
+            context: services/notification-service
+            dockerfile: services/notification-service/Dockerfile
+          - name: chat-service
+            context: services/chat-service
+            dockerfile: services/chat-service/Dockerfile
+          - name: frontend
+            context: frontend
+            dockerfile: frontend/Dockerfile
+          - name: api-gateway
+            context: infrastructure/api-gateway
+            dockerfile: infrastructure/api-gateway/Dockerfile
+          - name: config-server
+            context: infrastructure/config-server
+            dockerfile: infrastructure/config-server/Dockerfile
 
     steps:
       - name: Check out repository
