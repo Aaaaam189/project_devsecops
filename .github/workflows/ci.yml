@@ -6,6 +6,7 @@ on:
   push:
     branches:
       - phase1
+      - main
 
 permissions:
   contents: read
