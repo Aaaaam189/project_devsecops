@@ -1,4 +1,4 @@
 [allowlist]
 paths = [
     '''scripts/attacks/attack-credentials.sh'''
-]git add .gitleaks.toml
+]
