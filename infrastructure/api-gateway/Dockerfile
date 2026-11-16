@@ -10,7 +10,7 @@ FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 
 # Add non-root user
-RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+RUN addgroup -g 10001 -S appgroup && adduser -u 10001 -S appuser -G appgroup
 
 COPY --from=build /app/target/*.jar app.jar
 
@@ -20,6 +20,6 @@ USER appuser
 EXPOSE 8080
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:8080/actuator/health || exit 1
+  CMD ["wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/actuator/health"]
 
 ENTRYPOINT ["java", "-jar", "app.jar"]

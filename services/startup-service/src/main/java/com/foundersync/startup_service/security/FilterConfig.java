@@ -15,6 +15,9 @@ public class FilterConfig {
     public FilterRegistrationBean<AuthFilter> authFilterRegistration() {
         FilterRegistrationBean<AuthFilter> registrationBean = new FilterRegistrationBean<>();
         registrationBean.setFilter(authFilter);
+        // Scoped to /api/* only — /actuator/** is never passed through this
+        // filter, so Kubernetes liveness/readiness probes (which call
+        // /actuator/health with no Authorization header) are never blocked.
         registrationBean.addUrlPatterns("/api/*");
         registrationBean.setOrder(1);
         return registrationBean;

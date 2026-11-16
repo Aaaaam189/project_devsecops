@@ -1,0 +1,41 @@
+Hadolint "before" evidence — Phase 1, item 3 (Dockerfiles)
+Captured before any Dockerfile edits in this pass.
+Tool: hadolint/hadolint:latest (Docker image)
+Command used per file: Get-Content <file> -Raw | docker run --rm -i hadolint/hadolint hadolint -
+
+
+=== services/auth-service/Dockerfile ===
+-:13 DL3066 [92minfo[0m: Non-numeric user-id may not be resolvable by host system
+-:15 DL3025 [1m[93mwarning[0m: Use arguments JSON notation for CMD and ENTRYPOINT arguments
+
+=== services/user-service/Dockerfile ===
+-:13 DL3066 [92minfo[0m: Non-numeric user-id may not be resolvable by host system
+-:15 DL3025 [1m[93mwarning[0m: Use arguments JSON notation for CMD and ENTRYPOINT arguments
+
+=== services/startup-service/Dockerfile ===
+-:13 DL3066 [92minfo[0m: Non-numeric user-id may not be resolvable by host system
+-:15 DL3025 [1m[93mwarning[0m: Use arguments JSON notation for CMD and ENTRYPOINT arguments
+
+=== services/post-service/Dockerfile ===
+-:13 DL3066 [92minfo[0m: Non-numeric user-id may not be resolvable by host system
+-:15 DL3025 [1m[93mwarning[0m: Use arguments JSON notation for CMD and ENTRYPOINT arguments
+
+=== services/notification-service/Dockerfile ===
+-:13 DL3066 [92minfo[0m: Non-numeric user-id may not be resolvable by host system
+-:15 DL3025 [1m[93mwarning[0m: Use arguments JSON notation for CMD and ENTRYPOINT arguments
+
+=== services/chat-service/Dockerfile ===
+-:12 DL3066 [92minfo[0m: Non-numeric user-id may not be resolvable by host system
+-:16 DL3025 [1m[93mwarning[0m: Use arguments JSON notation for CMD and ENTRYPOINT arguments
+
+=== frontend/Dockerfile ===
+-:43 DL3066 [92minfo[0m: Non-numeric user-id may not be resolvable by host system
+-:47 DL3025 [1m[93mwarning[0m: Use arguments JSON notation for CMD and ENTRYPOINT arguments
+
+=== infrastructure/api-gateway/Dockerfile ===
+-:18 DL3066 [92minfo[0m: Non-numeric user-id may not be resolvable by host system
+-:22 DL3025 [1m[93mwarning[0m: Use arguments JSON notation for CMD and ENTRYPOINT arguments
+
+=== infrastructure/config-server/Dockerfile ===
+-:18 DL3066 [92minfo[0m: Non-numeric user-id may not be resolvable by host system
+-:22 DL3025 [1m[93mwarning[0m: Use arguments JSON notation for CMD and ENTRYPOINT arguments

@@ -14,6 +14,10 @@ const io = new Server(server, {
 
 app.use(express.json());
 
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'UP' });
+});
+
 app.use('/api/chat', require('./routes/conversationRoute'));
 app.use('/api/chat', require('./routes/messageRoute'));
 

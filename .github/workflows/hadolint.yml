@@ -1,0 +1,60 @@
+name: Hadolint
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: hadolint-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  hadolint:
+    name: Hadolint (${{ matrix.name }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: auth-service
+            dockerfile: services/auth-service/Dockerfile
+          - name: user-service
+            dockerfile: services/user-service/Dockerfile
+          - name: startup-service
+            dockerfile: services/startup-service/Dockerfile
+          - name: post-service
+            dockerfile: services/post-service/Dockerfile
+          - name: notification-service
+            dockerfile: services/notification-service/Dockerfile
+          - name: chat-service
+            dockerfile: services/chat-service/Dockerfile
+          - name: frontend
+            dockerfile: frontend/Dockerfile
+          - name: api-gateway
+            dockerfile: infrastructure/api-gateway/Dockerfile
+          - name: config-server
+            dockerfile: infrastructure/config-server/Dockerfile
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      # Pinned to the v3.5.0 release commit (verified signature), not a
+      # floating tag, so the action can't change behavior under us.
+      - name: Run Hadolint
+        uses: hadolint/hadolint-action@06be81baf89a55ffd0e24b8f04a4185738dd3387 # v3.5.0
+        with:
+          dockerfile: ${{ matrix.dockerfile }}
+          # Explicit path: the action's default (./.hadolint.yaml, repo
+          # root) happens to match where ours lives, but we pass it
+          # explicitly so this doesn't silently stop applying if the
+          # action's working directory assumption ever changes.
+          config: ./.hadolint.yaml
+          # Errors only for now. Warnings (e.g. DL3025-style findings)
+          # still print in the job log, they just don't fail the build.
+          # Tighten this later once the team is used to reading the
+          # output.
+          failure-threshold: error

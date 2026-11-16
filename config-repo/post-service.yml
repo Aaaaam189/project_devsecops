@@ -23,8 +23,8 @@ spring:
 
 app:
   aws:
-    access-key: ${AWS_ACCESS_KEY}
-    secret-key: ${AWS_SECRET_KEY}
+    access-key: ${AWS_ACCESS_KEY:dummy-access-key}
+    secret-key: ${AWS_SECRET_KEY:dummy-secret-key}
     region: eu-west-3
     bucket-name: ${AWS_BUCKET_NAME}
 

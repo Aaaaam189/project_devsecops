@@ -129,3 +129,19 @@ jobs:
 
             echo "Déploiement terminé"
             echo "API Gateway: http://${{ secrets.VM_HOST }}:8080"
+
+# ──────────────────────────────────────────────────────────────────────
+# DISABLED (renamed from deploy.yml, .yml/.yaml only run from this
+# directory, so .disabled stops GitHub Actions from picking this up).
+#
+# Reason: this targets the old EC2/Docker Hub setup (DOCKERHUB_USERNAME,
+# DOCKERHUB_TOKEN, VM_HOST, VM_SSH_KEY secrets). It fires on push to main,
+# same trigger as .github/workflows/build-push.yml, which now builds and
+# pushes all 9 services to GHCR instead. Running both on the same push
+# would either fail outright (if those secrets are stale/missing) or
+# push images to Docker Hub that nothing actually deploys from anymore.
+#
+# Needs a decision with Member A on the real deployment target (this VM?
+# a new one? skip straight to k3d in step 4?) before re-enabling. Nothing
+# below was changed — rename back to deploy.yml to restore it as-is.
+# ──────────────────────────────────────────────────────────────────────
