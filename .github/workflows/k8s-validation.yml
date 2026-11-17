@@ -1,0 +1,87 @@
+name: Kubernetes Validation
+
+on:
+  push:
+    branches: [main, phase2]
+    paths:
+      - 'k3d/**'
+      - '.github/workflows/k8s-validation.yml'
+  pull_request:
+    paths:
+      - 'k3d/**'
+      - '.github/workflows/k8s-validation.yml'
+
+jobs:
+  helm-lint:
+    name: Lint Helm Charts
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        chart:
+          - postgres
+          - rabbitmq
+          - mongodb
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: 'v3.14.0'
+      
+      - name: Lint Helm chart
+        run: helm lint ./k3d/charts/${{ matrix.chart }}
+      
+      - name: Validate Helm template rendering
+        run: |
+          helm template test-release ./k3d/charts/${{ matrix.chart }} \
+            --debug \
+            --dry-run
+
+  k8s-manifests:
+    name: Validate Kubernetes Manifests
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v4
+        with:
+          version: 'v1.29.0'
+      
+      - name: Validate K8s manifests
+        run: |
+          if [ -d "k3d/manifests" ]; then
+            kubectl apply --dry-run=client -f k3d/manifests/
+          else
+            echo "No manifests directory found, skipping"
+          fi
+      
+      - name: Validate with kubeval (optional)
+        run: |
+          wget https://github.com/instrumenta/kubeval/releases/latest/download/kubeval-linux-amd64.tar.gz
+          tar xf kubeval-linux-amd64.tar.gz
+          chmod +x kubeval
+          
+          if [ -d "k3d/manifests" ]; then
+            ./kubeval k3d/manifests/*.yaml
+          fi
+        continue-on-error: true
+
+  security-scan-helm:
+    name: Security Scan Helm Charts
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Run Trivy on Helm charts
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: config
+          scan-ref: k3d/charts
+          format: table
+          severity: HIGH,CRITICAL
+          exit-code: 0
