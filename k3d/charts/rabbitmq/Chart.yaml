@@ -1,0 +1,5 @@
+apiVersion: v2
+name: rabbitmq
+description: RabbitMQ broker for FoundersSync
+version: 0.1.0
+appVersion: "3"
