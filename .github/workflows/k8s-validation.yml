@@ -98,8 +98,14 @@ jobs:
 
       - name: Validate ingress manifest
         run: |
+          # --validate=false: dry-run=client still tries to fetch the
+          # live cluster's OpenAPI schema for validation by default,
+          # which fails outright in CI since no cluster exists here
+          # (same latent issue as the k3d/manifests branch above --
+          # it just never ran until this step existed). This keeps
+          # the check to local YAML/structural validation only.
           if [ -f "k3d/ingress.yaml" ]; then
-            kubectl apply --dry-run=client -f k3d/ingress.yaml
+            kubectl apply --dry-run=client --validate=false -f k3d/ingress.yaml
           else
             echo "No k3d/ingress.yaml found, skipping"
           fi
