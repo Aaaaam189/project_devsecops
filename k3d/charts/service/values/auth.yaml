@@ -1,9 +1,6 @@
 # auth-service — Spring Boot, Postgres (auth_db) + RabbitMQ + mail +
-# JWT issuing. JWT_SECRET below references a Secret named "jwt-secret"
-# with key "secret" — this is NOT YET in Member A's create-secrets.sh
-# contract (only postgres-credentials / rabbitmq-credentials exist
-# today). Using this name as a placeholder; must confirm with her
-# before step 5, or create it ourselves and tell her the name.
+# JWT issuing. JWT_SECRET below references the "jwt-secret" Kubernetes
+# Secret, key "secret", created by k3d/scripts/create-secrets.sh.
 #
 # Memory limit (768Mi) is higher than config-server/api-gateway because
 # auth-service also loads the mail starter and AWS SDK on top of the

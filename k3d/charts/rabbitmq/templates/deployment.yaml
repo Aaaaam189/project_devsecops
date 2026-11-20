@@ -34,10 +34,27 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.credentialsSecret }}
                   key: password
-          readinessProbe:
+          startupProbe:
             exec:
               command: ["rabbitmq-diagnostics", "-q", "ping"]
-            initialDelaySeconds: 20
+            periodSeconds: 10
+            timeoutSeconds: 10
+            failureThreshold: 30
+
+          readinessProbe:
+            exec:
+              command: ["rabbitmq-diagnostics", "-q", "check_running"]
             periodSeconds: 15
+            timeoutSeconds: 10
+            failureThreshold: 3
+
+          livenessProbe:
+            exec:
+              command: ["rabbitmq-diagnostics", "-q", "ping"]
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 5    
+            # With a startup probe in place, readiness and liveness don’t need initialDelaySeconds,
+            # because they only begin once startup succeeds
           resources:
             {{- toYaml .Values.resources | nindent 12 }}

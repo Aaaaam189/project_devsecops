@@ -36,10 +36,9 @@ service:
 env: {}
 
 # Environment variables sourced from a Kubernetes Secret via
-# secretKeyRef, as a map of ENV_NAME -> {secretName, secretKey}. This is
-# the "reference to the Secrets named in the contract" the plan asks
-# for — the Secret itself (postgres-credentials, rabbitmq-credentials,
-# etc.) is created by k3d/scripts/create-secrets.sh, not by this chart.
+# secretKeyRef, as a map of ENV_NAME -> {secretName, secretKey}. The Secrets
+# themselves (postgres-credentials, rabbitmq-credentials, jwt-secret, etc.)
+# are created by k3d/scripts/create-secrets.sh, not by this chart.
 envFromSecret: {}
 
 # HTTP path used for both probes. Sourced from the Phase 1 Dockerfile
