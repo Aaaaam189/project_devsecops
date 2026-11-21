@@ -53,7 +53,7 @@ spec:
               command: ["rabbitmq-diagnostics", "-q", "ping"]
             periodSeconds: 30
             timeoutSeconds: 10
-            failureThreshold: 5    
+            failureThreshold: 5
             # With a startup probe in place, readiness and liveness don’t need initialDelaySeconds,
             # because they only begin once startup succeeds
           resources:

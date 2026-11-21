@@ -23,7 +23,7 @@ env:
   POST_SERVICE_URL: "http://post-service:8084"
   CHAT_SERVICE_URL: "http://chat-service:8085"
   NOTIFICATION_SERVICE_URL: "http://notification-service:8086"
-  CORS_ALLOWED_ORIGINS: "http://localhost:3000,http://localhost:3001,http://localhost:4200"
+  CORS_ALLOWED_ORIGINS: "http://localhost:8080,http://localhost:3000,http://localhost:3001,http://localhost:4200"
 
 envFromSecret: {}
 

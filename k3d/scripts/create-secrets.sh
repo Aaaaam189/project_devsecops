@@ -18,20 +18,20 @@ POSTGRES_USER="${POSTGRES_USER:-postgres}"
 RABBITMQ_USER="${RABBITMQ_USER:-guest}"
 RABBITMQ_PASSWORD="${RABBITMQ_PASSWORD:-guest}"
 
-kubectl create namespace "$NS" --dry-run=client -o yaml | kubectl apply -f -
+kubectl create namespace "$NS" --dry-run=client -o yaml | kubectl apply --validate=false -f -
 
 kubectl -n "$NS" create secret generic postgres-credentials \
   --from-literal=username="$POSTGRES_USER" \
   --from-literal=password="$POSTGRES_PASSWORD" \
-  --dry-run=client -o yaml | kubectl apply -f -
+  --dry-run=client -o yaml | kubectl apply --validate=false -f -
 
 kubectl -n "$NS" create secret generic rabbitmq-credentials \
   --from-literal=username="$RABBITMQ_USER" \
   --from-literal=password="$RABBITMQ_PASSWORD" \
-  --dry-run=client -o yaml | kubectl apply -f -
+  --dry-run=client -o yaml | kubectl apply --validate=false -f -
 
 kubectl -n "$NS" create secret generic jwt-secret \
   --from-literal=secret="$JWT_SECRET" \
-  --dry-run=client -o yaml | kubectl apply -f -
+  --dry-run=client -o yaml | kubectl apply --validate=false -f -
 
 echo "Secrets ready in namespace $NS"
