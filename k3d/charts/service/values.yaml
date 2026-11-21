@@ -1,0 +1,91 @@
+# Default values for the shared "service" chart. Every per-service
+# values file (k3d/charts/service/values/*.yaml) overrides the parts
+# that differ — image, port, env, healthPath, resources — and normally
+# leaves securityContext and probes alone, since those are the same for
+# all 9 services by design (Phase 1's runAsUser 10001, Phase 1's fixed
+# health endpoints).
+
+nameOverride: ""
+
+replicaCount: 1
+
+image:
+  # Each per-service values file sets repository/tag. No default here
+  # on purpose — a missing image must fail loudly, not silently deploy
+  # something wrong.
+  repository: ""
+  tag: "latest"
+  # Set by step 5 (k3d image import): local images loaded directly into
+  # the cluster's containerd never need a pull, so Never avoids k3d
+  # trying (and failing) to reach GHCR for an image that's already
+  # there. Switch to IfNotPresent/Always once real GHCR pulls with a
+  # pullSecret are wired in later.
+  pullPolicy: Never
+
+# Empty by default, per the plan. Set to a list of secret names
+# (e.g. [{name: ghcr-pull-secret}]) once GHCR pulls are used instead of
+# k3d image import.
+imagePullSecrets: []
+
+service:
+  port: 8080
+  targetPort: 8080
+
+# Plain (non-secret) environment variables, as a map. Rendered via
+# range so each service's values file can list as many as it needs.
+env: {}
+
+# Environment variables sourced from a Kubernetes Secret via
+# secretKeyRef, as a map of ENV_NAME -> {secretName, secretKey}. The Secrets
+# themselves (postgres-credentials, rabbitmq-credentials, jwt-secret, etc.)
+# are created by k3d/scripts/create-secrets.sh, not by this chart.
+envFromSecret: {}
+
+# HTTP path used for both probes. Sourced from the Phase 1 Dockerfile
+# HEALTHCHECK for each service (/actuator/health for the 7 Spring Boot
+# services, /health for chat-service, / for the frontend).
+healthPath: /actuator/health
+
+probes:
+  liveness:
+    initialDelaySeconds: 30
+    periodSeconds: 15
+    timeoutSeconds: 5
+    failureThreshold: 3
+  readiness:
+    initialDelaySeconds: 15
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+
+# Matches Phase 1: every container in every Dockerfile runs as a fixed,
+# non-root UID (10001), already baked into the image via
+# addgroup -g 10001 / adduser -u 10001. Kubernetes can't verify
+# runAsNonRoot against a username, only a UID, so this must be the
+# number, not "appuser".
+securityContext:
+  runAsNonRoot: true
+  runAsUser: 10001
+  runAsGroup: 10001
+  allowPrivilegeEscalation: false
+
+# Conservative defaults sized for the lightest services (frontend,
+# chat-service). The 7 Java/Spring Boot services need more — their
+# per-service values files override this; see the JVM memory note in
+# values/auth.yaml for how the limit was chosen.
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    memory: 512Mi
+
+podAnnotations: {}
+
+# Only config-server sets this to true (values/config-server.yaml).
+# Mounts a ConfigMap built from k3d/charts/service/config-repo/*.yml at
+# /config-repo, replacing docker-compose.yml's
+# `./config-repo:/config-repo` bind mount.
+configRepo:
+  enabled: false
+  mountPath: /config-repo

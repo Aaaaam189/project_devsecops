@@ -1,0 +1,29 @@
+{{/*
+Only config-server needs this — it's the one service whose
+docker-compose.yml definition bind-mounts a host directory
+(./config-repo:/config-repo) instead of taking config purely through
+env vars. Kubernetes has no bind-mount equivalent, so this ConfigMap
+carries the same *.yml files Compose mounted, and deployment.yaml
+mounts it at /config-repo only when .Values.configRepo.enabled is
+true (set in values/config-server.yaml, nowhere else).
+
+CAVEAT: Helm's .Files can only read inside the chart directory, so
+these are copies of the real config-repo/*.yml at the repo root, kept
+at k3d/charts/service/config-repo/. They are NOT auto-synced — if you
+edit config-repo/*.yml, re-copy into k3d/charts/service/config-repo/
+before the next deploy, or config-server will serve stale config.
+Tracked as a manual step until someone scripts the copy into CI/deploy.
+*/}}
+{{- if .Values.configRepo.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "service.name" . }}-config-repo
+  labels:
+    {{- include "service.labels" . | nindent 4 }}
+data:
+  {{- range $path, $_ := .Files.Glob "config-repo/*.yml" }}
+  {{ base $path }}: |
+{{ $.Files.Get $path | indent 4 }}
+  {{- end }}
+{{- end }}

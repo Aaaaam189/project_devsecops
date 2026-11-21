@@ -1,0 +1,48 @@
+# frontend — odd one out #2: Next.js. NEXT_PUBLIC_HOST_GATEWAY_API_URL,
+# NEXT_PUBLIC_SERVER_URL and NEXT_PUBLIC_ASSET_URL are build-time args
+# baked into the client bundle (docker-compose.yml sets them under
+# `build.args`, not `environment`) — setting them here as runtime env
+# vars has NO EFFECT on what the browser actually calls, because
+# Next.js inlines NEXT_PUBLIC_* at `next build` time, not at container
+# startup. This chart's `env` map is therefore deliberately left empty;
+# it cannot fix this.
+#
+# This is exactly the "trap" called out for step 7 (ingress): the image
+# built from frontend/Dockerfile already has http://localhost:8080
+# baked in (see docker-compose.yml build.args), so once this pod is
+# reached through the ingress instead of localhost:8080, API calls from
+# the browser will still try localhost:8080 unless the image is
+# rebuilt with build args pointing at the ingress host, or the gateway
+# is also reachable at localhost:8080 from the developer's machine
+# (which k3d's own port mapping can still provide). Needs a decision in
+# step 7, not fixed here.
+#
+# No health endpoint fix was needed in Phase 1 beyond matching
+# HOSTNAME=0.0.0.0 — healthPath "/" is the Next.js server's default
+# 200 response, not a dedicated health route.
+
+nameOverride: frontend
+
+image:
+  repository: frontend
+  tag: latest
+
+service:
+  port: 3000
+  targetPort: 3000
+
+healthPath: /
+
+env:
+  HOSTNAME: "0.0.0.0"
+
+envFromSecret: {}
+
+# Next.js server (not the JVM) — lighter than the Spring Boot services,
+# heavier than chat-service due to SSR.
+resources:
+  requests:
+    cpu: 100m
+    memory: 192Mi
+  limits:
+    memory: 384Mi

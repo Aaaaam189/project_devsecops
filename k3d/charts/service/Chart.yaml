@@ -1,0 +1,11 @@
+apiVersion: v2
+name: service
+description: >-
+  Shared chart for FoundersSync's own services (config-server,
+  api-gateway, auth/user/startup/post/notification/chat-service,
+  frontend). One Deployment + one Service per install; every one of the
+  9 services is deployed with `helm install <release> k3d/charts/service
+  -f k3d/charts/service/values/<service>.yaml`, not 9 copies of this
+  chart.
+version: 0.1.0
+appVersion: "1.0"

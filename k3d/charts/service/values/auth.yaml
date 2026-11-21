@@ -1,0 +1,55 @@
+# auth-service — Spring Boot, Postgres (auth_db) + RabbitMQ + mail +
+# JWT issuing. JWT_SECRET below references the "jwt-secret" Kubernetes
+# Secret, key "secret", created by k3d/scripts/create-secrets.sh.
+#
+# Memory limit (768Mi) is higher than config-server/api-gateway because
+# auth-service also loads the mail starter and AWS SDK on top of the
+# usual Spring Boot + JPA + RabbitMQ baseline.
+
+nameOverride: auth-service
+
+image:
+  repository: auth-service
+  tag: latest
+
+service:
+  port: 8081
+  targetPort: 8081
+
+healthPath: /actuator/health
+
+env:
+  SPRING_CONFIG_IMPORT: "optional:configserver:http://config-server:8888"
+  SPRING_DATASOURCE_URL: "jdbc:postgresql://postgres:5432/auth_db"
+  SPRING_RABBITMQ_HOST: "rabbitmq"
+  MAIL_USERNAME: ""
+  MAIL_PASSWORD: ""
+  ADMIN_USERNAME: "admin@foundersync.com"
+  ADMIN_PASSWORD: "admin123"
+  AWS_ACCESS_KEY: "dummy-access-key"
+  AWS_SECRET_KEY: "dummy-secret-key"
+  AWS_BUCKET_NAME: "founderssync-uploads"
+
+envFromSecret:
+  SPRING_DATASOURCE_USERNAME:
+    secretName: postgres-credentials
+    secretKey: username
+  SPRING_DATASOURCE_PASSWORD:
+    secretName: postgres-credentials
+    secretKey: password
+  DB_USERNAME:
+    secretName: postgres-credentials
+    secretKey: username
+  DB_PASSWORD:
+    secretName: postgres-credentials
+    secretKey: password
+  JWT_SECRET:
+    secretName: jwt-secret
+    secretKey: secret
+
+resources:
+  requests:
+    cpu: 200m
+    memory: 448Mi
+  limits:
+    memory: 768Mi

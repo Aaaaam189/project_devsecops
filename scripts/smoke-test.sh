@@ -15,14 +15,22 @@
 # Usage:
 #   ./scripts/smoke-test.sh
 #
-# Requires: docker compose, curl, a POSIX shell (bash). No jq dependency —
-# JSON fields are pulled out with grep/sed since the response bodies are flat.
+#   Against k3d/Kubernetes instead of Compose, the stack is already running
+#   (deployed via Helm) — set SKIP_COMPOSE=1 to skip step 1, and point
+#   GATEWAY_URL/FRONTEND_URL at the ingress (both are the same address,
+#   e.g. http://localhost:8080, once routed through a single Ingress):
+#     SKIP_COMPOSE=1 GATEWAY_URL=http://localhost:8080 FRONTEND_URL=http://localhost:8080 ./scripts/smoke-test.sh
+#
+# Requires: docker compose (unless SKIP_COMPOSE=1), curl, a POSIX shell
+# (bash). No jq dependency — JSON fields are pulled out with grep/sed since
+# the response bodies are flat.
 
 set -u
 
 GATEWAY_URL="${GATEWAY_URL:-http://localhost:8080}"
 FRONTEND_URL="${FRONTEND_URL:-http://localhost:3001}"
 COMPOSE_WAIT_TIMEOUT="${COMPOSE_WAIT_TIMEOUT:-300}"
+SKIP_COMPOSE="${SKIP_COMPOSE:-}"
 
 TEST_EMAIL="smoketest-$(date +%s)-$$@test.com"
 TEST_PASSWORD="SmokeTest123!"
@@ -53,12 +61,18 @@ json_field() {
 
 # ──────────────────────────────────────────
 # 1. Start the stack and wait for healthchecks
+#    (skipped when SKIP_COMPOSE=1 — e.g. the stack is already running in
+#    k3d via Helm, and there is no docker-compose.yml involved at all)
 # ──────────────────────────────────────────
-step "docker compose up -d --wait (timeout ${COMPOSE_WAIT_TIMEOUT}s)"
-if ! docker compose up -d --wait --wait-timeout "$COMPOSE_WAIT_TIMEOUT"; then
-    fail_and_exit "docker compose up -d --wait (one or more containers did not become healthy)"
+if [ -n "$SKIP_COMPOSE" ]; then
+    step "docker compose up -d --wait (skipped, SKIP_COMPOSE=1)"
+else
+    step "docker compose up -d --wait (timeout ${COMPOSE_WAIT_TIMEOUT}s)"
+    if ! docker compose up -d --wait --wait-timeout "$COMPOSE_WAIT_TIMEOUT"; then
+        fail_and_exit "docker compose up -d --wait (one or more containers did not become healthy)"
+    fi
+    ok "all containers healthy"
 fi
-ok "all containers healthy"
 
 # ──────────────────────────────────────────
 # 2. Register a fresh test user

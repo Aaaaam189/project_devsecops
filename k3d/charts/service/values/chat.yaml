@@ -1,0 +1,49 @@
+# chat-service — odd one out #1: Node.js (not Spring Boot), MongoDB
+# instead of Postgres, its own health path (/health, not
+# /actuator/health), and much lighter resource needs than the JVM
+# services. JWT_SECRET here is for verifying tokens issued by
+# auth-service (same shared secret, same jwt-secret placeholder
+# caveat as auth.yaml/user.yaml).
+#
+# RABBITMQ_URL embeds guest:guest directly in docker-compose today —
+# left as a plain env var here rather than wired to rabbitmq-credentials,
+# since RabbitMQ's actual username/password (not just "guest") would
+# need the URL built from two secret pieces; chat-service's library
+# (amqplib) wants a single connection string. Flagged as something to
+# revisit once rabbitmq-credentials holds a non-default password.
+
+nameOverride: chat-service
+
+image:
+  repository: chat-service
+  tag: latest
+
+service:
+  port: 8085
+  targetPort: 8085
+
+healthPath: /health
+
+env:
+  PORT: "8085"
+  MONGO_URI: "mongodb://mongodb:27017/chatdb"
+  RABBITMQ_URL: "amqp://guest:guest@rabbitmq:5672"
+  AWS_REGION: "eu-west-3"
+  AWS_ACCESS_KEY_ID: ""
+  AWS_SECRET_ACCESS_KEY: ""
+  AWS_BUCKET_NAME: ""
+  USER_SERVICE_URL: "http://user-service:8082"
+
+envFromSecret:
+  JWT_SECRET:
+    secretName: jwt-secret
+    secretKey: secret
+
+# Node, single process, no JVM heap overhead — much lighter than the
+# Spring Boot services.
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    memory: 256Mi

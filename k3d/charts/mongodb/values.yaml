@@ -1,0 +1,15 @@
+image:
+  repository: mongo
+  tag: 7-jammy
+
+storage:
+  size: 1Gi
+
+wiredTigerCacheGB: "0.25"
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 192Mi
+  limits:
+    memory: 512Mi

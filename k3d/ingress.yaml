@@ -1,0 +1,64 @@
+# Single Ingress for the whole app, served through k3s's built-in
+# Traefik on the cluster's one entrypoint (host port 8080, per
+# k3d/cluster.yaml's `port: 8080:80` -> loadbalancer -> Traefik).
+#
+# This keeps the frontend image's baked-in
+# NEXT_PUBLIC_HOST_GATEWAY_API_URL=http://localhost:8080 valid: the
+# browser calls localhost:8080 for everything (REST, Socket.IO, and
+# the page itself), and this Ingress fans that single entrypoint out
+# to the right backend Service.
+#
+# Path order matters in Traefik's ingress controller — more specific
+# prefixes (/api, /socket.io) are listed before the catch-all (/), and
+# pathType Prefix on "/" never shadows them since Traefik's ingress
+# implementation sorts by path length, but keeping explicit order here
+# for readability.
+#
+# No host is set (no "host:" field) — this matches any Host header,
+# which is fine for local k3d access via localhost:8080 and avoids
+# requiring a specific hostname during development.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: foundersync
+  namespace: foundersync
+  annotations:
+    # chat-service's Socket.IO connection is a long-lived WebSocket
+    # upgrade through api-gateway -> chat-service. Traefik proxies
+    # WebSocket upgrades transparently over HTTP(S) ingress by default
+    # (no special annotation needed, unlike nginx-ingress's
+    # nginx.ingress.kubernetes.io/proxy-read-timeout /
+    # Upgrade/Connection header handling) — Traefik detects the
+    # Connection: Upgrade header and switches to raw TCP proxying
+    # automatically. Left here as a note in case WebSocket traffic
+    # ever appears to drop: check Traefik's idle timeout
+    # (traefik.ingress.kubernetes.io/router.middlewares or the
+    # EntryPoint's transport.respondingTimeouts) before assuming the
+    # Ingress itself is the problem.
+    traefik.ingress.kubernetes.io/router.entrypoints: web
+spec:
+  ingressClassName: traefik
+  rules:
+    - http:
+        paths:
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: api-gateway
+                port:
+                  number: 8080
+          - path: /socket.io
+            pathType: Prefix
+            backend:
+              service:
+                name: api-gateway
+                port:
+                  number: 8080
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: frontend
+                port:
+                  number: 3000

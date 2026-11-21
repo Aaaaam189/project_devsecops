@@ -1,0 +1,33 @@
+# config-server — Spring Cloud Config Server, native profile serving
+# files from config-repo/. docker-compose.yml bind-mounts
+# ./config-repo:/config-repo; here that becomes a ConfigMap (built from
+# k3d/charts/service/config-repo/*.yml by templates/configmap.yaml)
+# mounted at /config-repo — see configRepo.enabled below.
+
+nameOverride: config-server
+
+configRepo:
+  enabled: true
+
+image:
+  repository: config-server
+  tag: latest
+
+service:
+  port: 8888
+  targetPort: 8888
+
+healthPath: /actuator/health
+
+env:
+  SPRING_PROFILES_ACTIVE: native
+  SPRING_CLOUD_CONFIG_SERVER_NATIVE_SEARCH_LOCATIONS: file:/config-repo
+
+envFromSecret: {}
+
+resources:
+  requests:
+    cpu: 150m
+    memory: 384Mi
+  limits:
+    memory: 640Mi
