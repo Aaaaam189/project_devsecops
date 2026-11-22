@@ -27,13 +27,41 @@ spec:
             - name: RABBITMQ_DEFAULT_USER
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.credentialsSecret }}
+                  name: {{ .Values.adminCredentialsSecret }}
                   key: username
             - name: RABBITMQ_DEFAULT_PASS
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.credentialsSecret }}
+                  name: {{ .Values.adminCredentialsSecret }}
                   key: password
+            - name: RABBITMQ_APP_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.appCredentialsSecret }}
+                  key: username
+            - name: RABBITMQ_APP_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.appCredentialsSecret }}
+                  key: password
+          lifecycle:
+            postStart:
+              exec:
+                command:
+                  - /bin/sh
+                  - -c
+                  - |
+                    for i in $(seq 1 30); do
+                      rabbitmq-diagnostics -q ping >/dev/null 2>&1 && break
+                      sleep 2
+                    done
+                    rabbitmqctl add_vhost /foundersync >/dev/null 2>&1 || true
+                    if rabbitmqctl list_users | awk '{print $1}' | grep -qx "$RABBITMQ_APP_USER"; then
+                      rabbitmqctl change_password "$RABBITMQ_APP_USER" "$RABBITMQ_APP_PASSWORD"
+                    else
+                      rabbitmqctl add_user "$RABBITMQ_APP_USER" "$RABBITMQ_APP_PASSWORD"
+                    fi
+                    rabbitmqctl set_permissions -p /foundersync "$RABBITMQ_APP_USER" ".*" ".*" ".*"
           startupProbe:
             exec:
               command: ["rabbitmq-diagnostics", "-q", "ping"]

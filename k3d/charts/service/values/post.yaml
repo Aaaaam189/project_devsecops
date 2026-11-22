@@ -18,6 +18,8 @@ env:
   SPRING_CONFIG_IMPORT: "optional:configserver:http://config-server:8888"
   SPRING_DATASOURCE_URL: "jdbc:postgresql://postgres:5432/post_service_db"
   SPRING_RABBITMQ_HOST: "rabbitmq"
+  SPRING_RABBITMQ_PORT: "5672"
+  SPRING_RABBITMQ_VIRTUAL_HOST: "/foundersync"
   AWS_ACCESS_KEY: "dummy-access-key"
   AWS_SECRET_KEY: "dummy-secret-key"
   AWS_BUCKET_NAME: "founderssync-uploads"
@@ -35,6 +37,12 @@ envFromSecret:
     secretKey: username
   DB_PASSWORD:
     secretName: postgres-app-credentials
+    secretKey: password
+  SPRING_RABBITMQ_USERNAME:
+    secretName: rabbitmq-app-credentials
+    secretKey: username
+  SPRING_RABBITMQ_PASSWORD:
+    secretName: rabbitmq-app-credentials
     secretKey: password
 
 resources:

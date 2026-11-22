@@ -1,8 +1,19 @@
 const amqp = require('amqplib');
 let channel = null;
+
+const buildRabbitMQUrl = () => {
+  const host = process.env.RABBITMQ_HOST || 'rabbitmq';
+  const port = process.env.RABBITMQ_PORT || '5672';
+  const username = encodeURIComponent(process.env.RABBITMQ_USERNAME);
+  const password = encodeURIComponent(process.env.RABBITMQ_PASSWORD);
+  const virtualHost = encodeURIComponent(process.env.RABBITMQ_VIRTUAL_HOST || '/foundersync');
+
+  return `amqp://${username}:${password}@${host}:${port}/${virtualHost}`;
+};
+
 const connectRabbitMQ = async () => {
   try {
-    const connection = await amqp.connect(process.env.RABBITMQ_URL);
+    const connection = await amqp.connect(buildRabbitMQUrl());
     channel = await connection.createChannel();
     console.log('RabbitMQ Connected');
     // Reconnexion automatique si connexion perdue

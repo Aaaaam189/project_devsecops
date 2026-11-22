@@ -1,7 +1,14 @@
 const mongoose = require("mongoose");
 const connectDB = async () => {
   try {
-    await mongoose.connect(process.env.MONGO_URI);
+    const mongoUri = process.env.MONGO_URI || [
+      "mongodb://",
+      `${encodeURIComponent(process.env.MONGO_ADMIN_USER)}:${encodeURIComponent(process.env.MONGO_ADMIN_PASSWORD)}`,
+      `@${process.env.MONGO_HOST || "mongodb"}:${process.env.MONGO_PORT || "27017"}/${process.env.MONGO_DATABASE || "chatdb"}`,
+      "?authSource=admin",
+    ].join("");
+
+    await mongoose.connect(mongoUri);
 
     console.log("MongoDB Connected");
   } catch (error) {

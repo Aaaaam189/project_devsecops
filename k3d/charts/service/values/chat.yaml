@@ -5,12 +5,8 @@
 # auth-service (same shared secret, same jwt-secret placeholder
 # caveat as auth.yaml/user.yaml).
 #
-# RABBITMQ_URL embeds guest:guest directly in docker-compose today —
-# left as a plain env var here rather than wired to rabbitmq-credentials,
-# since RabbitMQ's actual username/password (not just "guest") would
-# need the URL built from two secret pieces; chat-service's library
-# (amqplib) wants a single connection string. Flagged as something to
-# revisit once rabbitmq-credentials holds a non-default password.
+# The Node.js chat service receives RabbitMQ username/password from
+# rabbitmq-app-credentials and constructs its AMQP URL at runtime.
 
 nameOverride: chat-service
 
@@ -26,8 +22,12 @@ healthPath: /health
 
 env:
   PORT: "8085"
-  MONGO_URI: "mongodb://mongodb:27017/chatdb"
-  RABBITMQ_URL: "amqp://guest:guest@rabbitmq:5672"
+  MONGO_HOST: "mongodb"
+  MONGO_PORT: "27017"
+  MONGO_DATABASE: "chatdb"
+  RABBITMQ_HOST: "rabbitmq"
+  RABBITMQ_PORT: "5672"
+  RABBITMQ_VIRTUAL_HOST: "/foundersync"
   AWS_REGION: "eu-west-3"
   AWS_ACCESS_KEY_ID: ""
   AWS_SECRET_ACCESS_KEY: ""
@@ -35,6 +35,18 @@ env:
   USER_SERVICE_URL: "http://user-service:8082"
 
 envFromSecret:
+  RABBITMQ_USERNAME:
+    secretName: rabbitmq-app-credentials
+    secretKey: username
+  RABBITMQ_PASSWORD:
+    secretName: rabbitmq-app-credentials
+    secretKey: password
+  MONGO_ADMIN_USER:
+    secretName: mongodb-credentials
+    secretKey: username
+  MONGO_ADMIN_PASSWORD:
+    secretName: mongodb-credentials
+    secretKey: password
   JWT_SECRET:
     secretName: jwt-secret
     secretKey: secret

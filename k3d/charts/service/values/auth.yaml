@@ -22,6 +22,8 @@ env:
   SPRING_CONFIG_IMPORT: "optional:configserver:http://config-server:8888"
   SPRING_DATASOURCE_URL: "jdbc:postgresql://postgres:5432/auth_db"
   SPRING_RABBITMQ_HOST: "rabbitmq"
+  SPRING_RABBITMQ_PORT: "5672"
+  SPRING_RABBITMQ_VIRTUAL_HOST: "/foundersync"
   MAIL_USERNAME: ""
   MAIL_PASSWORD: ""
   ADMIN_USERNAME: "admin@foundersync.com"
@@ -46,6 +48,12 @@ envFromSecret:
   JWT_SECRET:
     secretName: jwt-secret
     secretKey: secret
+  SPRING_RABBITMQ_USERNAME:
+    secretName: rabbitmq-app-credentials
+    secretKey: username
+  SPRING_RABBITMQ_PASSWORD:
+    secretName: rabbitmq-app-credentials
+    secretKey: password
 
 resources:
   requests:

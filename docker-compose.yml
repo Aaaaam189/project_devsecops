@@ -25,6 +25,9 @@ services:
   mongodb:
     image: mongo:7-jammy
     container_name: mongodb
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ADMIN_USER:-mongodb_admin}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ADMIN_PASSWORD:?Set MONGO_ADMIN_PASSWORD in .env}
     ports:
       - "27017:27017"
     volumes:
@@ -40,6 +43,9 @@ services:
   rabbitmq:
     image: rabbitmq:3-management-alpine
     container_name: rabbitmq-foundersync
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_ADMIN_USER:-rabbitmq_admin}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_ADMIN_PASSWORD:?Set RABBITMQ_ADMIN_PASSWORD in .env}
     ports:
       - "5672:5672"
       - "15672:15672"
@@ -116,6 +122,10 @@ services:
       SPRING_DATASOURCE_USERNAME: ${DB_USERNAME:-postgres}
       SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-postgres}
       SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_VIRTUAL_HOST: /foundersync
+      SPRING_RABBITMQ_USERNAME: ${RABBITMQ_APP_USER:-foundersync_app}
+      SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_APP_PASSWORD:?Set RABBITMQ_APP_PASSWORD in .env}
       DB_USERNAME: ${DB_USERNAME:-postgres}
       DB_PASSWORD: ${DB_PASSWORD:-postgres}
       JWT_SECRET: ${JWT_SECRET:-founderssync_jwt_secret_minimum_32_characters_ok}
@@ -150,6 +160,10 @@ services:
       SPRING_DATASOURCE_USERNAME: ${DB_USERNAME:-postgres}
       SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-postgres}
       SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_VIRTUAL_HOST: /foundersync
+      SPRING_RABBITMQ_USERNAME: ${RABBITMQ_APP_USER:-foundersync_app}
+      SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_APP_PASSWORD:?Set RABBITMQ_APP_PASSWORD in .env}
       DB_USERNAME: ${DB_USERNAME:-postgres}
       DB_PASSWORD: ${DB_PASSWORD:-postgres}
       JWT_SECRET: ${JWT_SECRET:-founderssync_jwt_secret_minimum_32_characters_ok}
@@ -178,6 +192,10 @@ services:
       SPRING_DATASOURCE_USERNAME: ${DB_USERNAME:-postgres}
       SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-postgres}
       SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_VIRTUAL_HOST: /foundersync
+      SPRING_RABBITMQ_USERNAME: ${RABBITMQ_APP_USER:-foundersync_app}
+      SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_APP_PASSWORD:?Set RABBITMQ_APP_PASSWORD in .env}
       DB_USERNAME: ${DB_USERNAME:-postgres}
       DB_PASSWORD: ${DB_PASSWORD:-postgres}
       AWS_ACCESS_KEY: ${STARTUP_AWS_ACCESS_KEY:-dummy-access-key}
@@ -205,6 +223,10 @@ services:
       SPRING_DATASOURCE_USERNAME: ${DB_USERNAME:-postgres}
       SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-postgres}
       SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_VIRTUAL_HOST: /foundersync
+      SPRING_RABBITMQ_USERNAME: ${RABBITMQ_APP_USER:-foundersync_app}
+      SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_APP_PASSWORD:?Set RABBITMQ_APP_PASSWORD in .env}
       DB_USERNAME: ${DB_USERNAME:-postgres}
       DB_PASSWORD: ${DB_PASSWORD:-postgres}
       AWS_ACCESS_KEY: ${POST_AWS_ACCESS_KEY:-dummy-access-key}
@@ -229,9 +251,13 @@ services:
     restart: on-failure
     environment:
       PORT: 8085
-      MONGO_URI: mongodb://mongodb:27017/chatdb
+      MONGO_URI: mongodb://${MONGO_ADMIN_USER:-mongodb_admin}:${MONGO_ADMIN_PASSWORD:?Set MONGO_ADMIN_PASSWORD in .env}@mongodb:27017/chatdb?authSource=admin
       JWT_SECRET: ${JWT_SECRET:-founderssync_jwt_secret_minimum_32_characters_ok}
-      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_VIRTUAL_HOST: /foundersync
+      RABBITMQ_USERNAME: ${RABBITMQ_APP_USER:-foundersync_app}
+      RABBITMQ_PASSWORD: ${RABBITMQ_APP_PASSWORD:?Set RABBITMQ_APP_PASSWORD in .env}
       AWS_ACCESS_KEY_ID: ${CHAT_AWS_ACCESS_KEY:-}
       AWS_SECRET_ACCESS_KEY: ${CHAT_AWS_SECRET_KEY:-}
       AWS_REGION: eu-west-3
@@ -257,6 +283,10 @@ services:
       SPRING_DATASOURCE_USERNAME: ${DB_USERNAME:-postgres}
       SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-postgres}
       SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_VIRTUAL_HOST: /foundersync
+      SPRING_RABBITMQ_USERNAME: ${RABBITMQ_APP_USER:-foundersync_app}
+      SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_APP_PASSWORD:?Set RABBITMQ_APP_PASSWORD in .env}
       DB_USERNAME: ${DB_USERNAME:-postgres}
       DB_PASSWORD: ${DB_PASSWORD:-postgres}
     ports:

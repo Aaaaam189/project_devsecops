@@ -14,27 +14,41 @@ fi
 NS="${NS:-foundersync}"
 : "${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env or before running this script}"
 : "${POSTGRES_APP_PASSWORD:?Set POSTGRES_APP_PASSWORD in .env or before running this script}"
+: "${RABBITMQ_ADMIN_PASSWORD:?Set RABBITMQ_ADMIN_PASSWORD in .env or before running this script}"
+: "${RABBITMQ_APP_PASSWORD:?Set RABBITMQ_APP_PASSWORD in .env or before running this script}"
+: "${MONGO_ADMIN_PASSWORD:?Set MONGO_ADMIN_PASSWORD in .env or before running this script}"
 : "${JWT_SECRET:?Set JWT_SECRET in .env or before running this script}"
 POSTGRES_USER="${POSTGRES_USER:-postgres}"
 POSTGRES_APP_USER="${POSTGRES_APP_USER:-foundersync_app}"
-RABBITMQ_USER="${RABBITMQ_USER:-guest}"
-RABBITMQ_PASSWORD="${RABBITMQ_PASSWORD:-guest}"
+RABBITMQ_ADMIN_USER="${RABBITMQ_ADMIN_USER:-rabbitmq_admin}"
+RABBITMQ_APP_USER="${RABBITMQ_APP_USER:-foundersync_app}"
+MONGO_ADMIN_USER="${MONGO_ADMIN_USER:-mongodb_admin}"
 
-kubectl -n "$NS" delete secret postgres-credentials postgres-app-credentials rabbitmq-credentials jwt-secret --ignore-not-found=true >/dev/null
+apply_credential_secret() {
+  name="$1"
+  username="$2"
+  password="$3"
+  username_b64="$(printf '%s' "$username" | base64 | tr -d '\n')"
+  password_b64="$(printf '%s' "$password" | base64 | tr -d '\n')"
+  payload="$(printf '{"apiVersion":"v1","kind":"Secret","metadata":{"name":"%s","namespace":"%s"},"type":"Opaque","data":{"username":"%s","password":"%s"}}' "$name" "$NS" "$username_b64" "$password_b64")"
 
-kubectl -n "$NS" create secret generic postgres-credentials \
-  --from-literal=username="$POSTGRES_USER" \
-  --from-literal=password="$POSTGRES_PASSWORD"
+  if ! printf '%s' "$payload" | kubectl create --validate=false -f - >/dev/null 2>&1; then
+    printf '%s' "$payload" | kubectl replace --validate=false -f - >/dev/null
+  fi
+}
 
-kubectl -n "$NS" create secret generic postgres-app-credentials \
-  --from-literal=username="$POSTGRES_APP_USER" \
-  --from-literal=password="$POSTGRES_APP_PASSWORD"
+apply_credential_secret postgres-credentials "$POSTGRES_USER" "$POSTGRES_PASSWORD"
+apply_credential_secret postgres-app-credentials "$POSTGRES_APP_USER" "$POSTGRES_APP_PASSWORD"
+apply_credential_secret rabbitmq-admin-credentials "$RABBITMQ_ADMIN_USER" "$RABBITMQ_ADMIN_PASSWORD"
+apply_credential_secret rabbitmq-app-credentials "$RABBITMQ_APP_USER" "$RABBITMQ_APP_PASSWORD"
+apply_credential_secret rabbitmq-credentials "$RABBITMQ_ADMIN_USER" "$RABBITMQ_ADMIN_PASSWORD"
+apply_credential_secret mongodb-credentials "$MONGO_ADMIN_USER" "$MONGO_ADMIN_PASSWORD"
 
-kubectl -n "$NS" create secret generic rabbitmq-credentials \
-  --from-literal=username="$RABBITMQ_USER" \
-  --from-literal=password="$RABBITMQ_PASSWORD"
+jwt_b64="$(printf '%s' "$JWT_SECRET" | base64 | tr -d '\n')"
+jwt_payload="$(printf '{"apiVersion":"v1","kind":"Secret","metadata":{"name":"jwt-secret","namespace":"%s"},"type":"Opaque","data":{"secret":"%s"}}' "$NS" "$jwt_b64")"
 
-kubectl -n "$NS" create secret generic jwt-secret \
-  --from-literal=secret="$JWT_SECRET"
+if ! printf '%s' "$jwt_payload" | kubectl create --validate=false -f - >/dev/null 2>&1; then
+  printf '%s' "$jwt_payload" | kubectl replace --validate=false -f - >/dev/null
+fi
 
 echo "Secrets ready in namespace $NS"
