@@ -6,6 +6,10 @@ credentialsSecret: rabbitmq-admin-credentials
 adminCredentialsSecret: rabbitmq-admin-credentials
 appCredentialsSecret: rabbitmq-app-credentials
 
+tls:
+  enabled: true
+  secretName: rabbitmq-tls
+
 resources:
   requests:
     cpu: 100m

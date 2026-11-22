@@ -21,6 +21,10 @@ spec:
           ports:
             - name: amqp
               containerPort: 5672
+            {{- if .Values.tls.enabled }}
+            - name: amqps
+              containerPort: 5671
+            {{- end }}
             - name: management
               containerPort: 15672
           env:
@@ -34,6 +38,16 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.adminCredentialsSecret }}
                   key: password
+          {{- if .Values.tls.enabled }}
+          volumeMounts:
+            - name: rabbitmq-tls
+              mountPath: /etc/rabbitmq/tls
+              readOnly: true
+            - name: rabbitmq-config
+              mountPath: /etc/rabbitmq/rabbitmq.conf
+              subPath: rabbitmq.conf
+              readOnly: true
+          {{- end }}
             - name: RABBITMQ_APP_USER
               valueFrom:
                 secretKeyRef:
@@ -86,3 +100,12 @@ spec:
             # because they only begin once startup succeeds
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
+      {{- if .Values.tls.enabled }}
+      volumes:
+        - name: rabbitmq-tls
+          secret:
+            secretName: {{ .Values.tls.secretName }}
+        - name: rabbitmq-config
+          configMap:
+            name: {{ .Chart.Name }}-config
+      {{- end }}
