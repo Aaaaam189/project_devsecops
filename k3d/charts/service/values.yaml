@@ -82,6 +82,12 @@ resources:
 
 podAnnotations: {}
 
+# One ServiceAccount per service, named after the release. Istio
+# AuthorizationPolicies match callers by ServiceAccount, so each service
+# needs its own identity (see docs/call-matrix.md).
+serviceAccount:
+  create: true
+
 # Only config-server sets this to true (values/config-server.yaml).
 # Mounts a ConfigMap built from k3d/charts/service/config-repo/*.yml at
 # /config-repo, replacing docker-compose.yml's
