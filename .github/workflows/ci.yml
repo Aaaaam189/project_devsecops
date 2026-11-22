@@ -25,6 +25,10 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Validate Compose file
+        env:
+          MONGO_ADMIN_PASSWORD: ci-mongodb-password
+          RABBITMQ_ADMIN_PASSWORD: ci-rabbitmq-admin-password
+          RABBITMQ_APP_PASSWORD: ci-rabbitmq-app-password
         run: docker compose config --quiet
 
   java-tests:
