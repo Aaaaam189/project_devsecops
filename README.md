@@ -48,3 +48,34 @@ Ce projet est développé dans le cadre de la filière GL par :
 * **Wissal KALLAH**
 * **Aya MLOUKI**
 * **Nada MESBAH**
+
+## Istio setup
+
+RabbitMQ is kept outside the Istio mesh and uses broker TLS. Application pods
+connect to RabbitMQ over port `5671`.
+
+Install Istio from the repository script. The script intentionally pins:
+
+- Istio version: `1.24.3`
+- Profile: `demo`
+- Ingress gateway namespace: `istio-system`
+- Application namespace: `foundersync`
+
+```bash
+./k3d/scripts/install-istio.sh
+```
+
+Install `istioctl 1.24.3` first. For Scoop:
+
+```powershell
+scoop bucket add main
+scoop install istioctl
+```
+
+Verify that Scoop installed the required version before running the script:
+
+```bash
+istioctl version --remote=false
+```
+
+The script rejects a different client version instead of silently mixing releases.

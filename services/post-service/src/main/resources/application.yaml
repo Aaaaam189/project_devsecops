@@ -7,5 +7,9 @@ spring:
 server:
   port: 8084
 
+app:
+  jwt:
+    secret: ${JWT_SECRET:founderssync_jwt_secret_minimum_32_characters_ok}
+
 user-service:
   url: http://localhost:8082

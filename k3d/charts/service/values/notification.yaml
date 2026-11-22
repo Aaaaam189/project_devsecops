@@ -18,7 +18,8 @@ env:
   SPRING_CONFIG_IMPORT: "optional:configserver:http://config-server:8888"
   SPRING_DATASOURCE_URL: "jdbc:postgresql://postgres:5432/notification_service_db"
   SPRING_RABBITMQ_HOST: "rabbitmq"
-  SPRING_RABBITMQ_PORT: "5672"
+  SPRING_RABBITMQ_PORT: "5671"
+  SPRING_RABBITMQ_SSL_ENABLED: "true"
   SPRING_RABBITMQ_VIRTUAL_HOST: "/foundersync"
 
 envFromSecret:
@@ -40,6 +41,9 @@ envFromSecret:
   SPRING_RABBITMQ_PASSWORD:
     secretName: rabbitmq-app-credentials
     secretKey: password
+  JWT_SECRET:
+    secretName: jwt-secret
+    secretKey: secret
 
 resources:
   requests:

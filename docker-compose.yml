@@ -28,10 +28,13 @@ services:
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_ADMIN_USER:-mongodb_admin}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ADMIN_PASSWORD:?Set MONGO_ADMIN_PASSWORD in .env}
+      MONGO_CHAT_USER: ${MONGO_CHAT_USER:-foundersync_chat}
+      MONGO_CHAT_PASSWORD: ${MONGO_CHAT_PASSWORD:?Set MONGO_CHAT_PASSWORD in .env}
     ports:
       - "27017:27017"
     volumes:
       - mongo_data:/data/db
+      - ./scripts/init-mongodb.sh:/docker-entrypoint-initdb.d/init-mongodb.sh:ro
     networks:
       - foundersync-network
     healthcheck:
@@ -229,6 +232,7 @@ services:
       SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_APP_PASSWORD:?Set RABBITMQ_APP_PASSWORD in .env}
       DB_USERNAME: ${DB_USERNAME:-postgres}
       DB_PASSWORD: ${DB_PASSWORD:-postgres}
+      JWT_SECRET: ${JWT_SECRET:-founderssync_jwt_secret_minimum_32_characters_ok}
       AWS_ACCESS_KEY: ${POST_AWS_ACCESS_KEY:-dummy-access-key}
       AWS_SECRET_KEY: ${POST_AWS_SECRET_KEY:-dummy-secret-key}
       AWS_BUCKET_NAME: ${POST_AWS_BUCKET_NAME:-founderssync-uploads}
@@ -251,7 +255,7 @@ services:
     restart: on-failure
     environment:
       PORT: 8085
-      MONGO_URI: mongodb://${MONGO_ADMIN_USER:-mongodb_admin}:${MONGO_ADMIN_PASSWORD:?Set MONGO_ADMIN_PASSWORD in .env}@mongodb:27017/chatdb?authSource=admin
+      MONGO_URI: mongodb://${MONGO_CHAT_USER:-foundersync_chat}:${MONGO_CHAT_PASSWORD:?Set MONGO_CHAT_PASSWORD in .env}@mongodb:27017/chatdb?authSource=chatdb
       JWT_SECRET: ${JWT_SECRET:-founderssync_jwt_secret_minimum_32_characters_ok}
       RABBITMQ_HOST: rabbitmq
       RABBITMQ_PORT: 5672
@@ -289,6 +293,7 @@ services:
       SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_APP_PASSWORD:?Set RABBITMQ_APP_PASSWORD in .env}
       DB_USERNAME: ${DB_USERNAME:-postgres}
       DB_PASSWORD: ${DB_PASSWORD:-postgres}
+      JWT_SECRET: ${JWT_SECRET:-founderssync_jwt_secret_minimum_32_characters_ok}
     ports:
       - "8086:8086"
     networks:

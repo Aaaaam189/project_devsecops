@@ -17,12 +17,14 @@ NS="${NS:-foundersync}"
 : "${RABBITMQ_ADMIN_PASSWORD:?Set RABBITMQ_ADMIN_PASSWORD in .env or before running this script}"
 : "${RABBITMQ_APP_PASSWORD:?Set RABBITMQ_APP_PASSWORD in .env or before running this script}"
 : "${MONGO_ADMIN_PASSWORD:?Set MONGO_ADMIN_PASSWORD in .env or before running this script}"
+: "${MONGO_CHAT_PASSWORD:?Set MONGO_CHAT_PASSWORD in .env or before running this script}"
 : "${JWT_SECRET:?Set JWT_SECRET in .env or before running this script}"
 POSTGRES_USER="${POSTGRES_USER:-postgres}"
 POSTGRES_APP_USER="${POSTGRES_APP_USER:-foundersync_app}"
 RABBITMQ_ADMIN_USER="${RABBITMQ_ADMIN_USER:-rabbitmq_admin}"
 RABBITMQ_APP_USER="${RABBITMQ_APP_USER:-foundersync_app}"
 MONGO_ADMIN_USER="${MONGO_ADMIN_USER:-mongodb_admin}"
+MONGO_CHAT_USER="${MONGO_CHAT_USER:-foundersync_chat}"
 
 apply_credential_secret() {
   name="$1"
@@ -43,6 +45,7 @@ apply_credential_secret rabbitmq-admin-credentials "$RABBITMQ_ADMIN_USER" "$RABB
 apply_credential_secret rabbitmq-app-credentials "$RABBITMQ_APP_USER" "$RABBITMQ_APP_PASSWORD"
 apply_credential_secret rabbitmq-credentials "$RABBITMQ_ADMIN_USER" "$RABBITMQ_ADMIN_PASSWORD"
 apply_credential_secret mongodb-credentials "$MONGO_ADMIN_USER" "$MONGO_ADMIN_PASSWORD"
+apply_credential_secret mongodb-chat-credentials "$MONGO_CHAT_USER" "$MONGO_CHAT_PASSWORD"
 
 jwt_b64="$(printf '%s' "$JWT_SECRET" | base64 | tr -d '\n')"
 jwt_payload="$(printf '{"apiVersion":"v1","kind":"Secret","metadata":{"name":"jwt-secret","namespace":"%s"},"type":"Opaque","data":{"secret":"%s"}}' "$NS" "$jwt_b64")"

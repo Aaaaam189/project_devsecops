@@ -8,12 +8,17 @@ const buildRabbitMQUrl = () => {
   const password = encodeURIComponent(process.env.RABBITMQ_PASSWORD);
   const virtualHost = encodeURIComponent(process.env.RABBITMQ_VIRTUAL_HOST || '/foundersync');
 
-  return `amqp://${username}:${password}@${host}:${port}/${virtualHost}`;
+  const protocol = process.env.RABBITMQ_PROTOCOL || 'amqp';
+  return `${protocol}://${username}:${password}@${host}:${port}/${virtualHost}`;
 };
 
 const connectRabbitMQ = async () => {
   try {
-    const connection = await amqp.connect(buildRabbitMQUrl());
+    const protocol = process.env.RABBITMQ_PROTOCOL || 'amqp';
+    const connection = await amqp.connect(
+      buildRabbitMQUrl(),
+      protocol === 'amqps' ? { rejectUnauthorized: false } : undefined
+    );
     channel = await connection.createChannel();
     console.log('RabbitMQ Connected');
     // Reconnexion automatique si connexion perdue

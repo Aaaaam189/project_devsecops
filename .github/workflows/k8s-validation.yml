@@ -39,6 +39,14 @@ jobs:
             --debug \
             --dry-run
 
+      - name: Validate rendered Kubernetes schema
+        run: |
+          curl -sL https://github.com/yannh/kubeconform/releases/latest/download/kubeconform-linux-amd64.tar.gz \
+            -o kubeconform.tar.gz
+          tar xf kubeconform.tar.gz kubeconform
+          helm template test-release ./k3d/charts/${{ matrix.chart }} |
+            ./kubeconform -summary -strict -
+
   helm-lint-service:
     name: Lint Shared Service Chart (per service)
     runs-on: ubuntu-latest

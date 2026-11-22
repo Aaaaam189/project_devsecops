@@ -2,6 +2,8 @@ package com.foundersync.post_service.controller;
 
 import com.foundersync.post_service.dto.PostResponse;
 import com.foundersync.post_service.service.SavedPostService;
+import com.foundersync.post_service.security.AuthenticatedUser;
+import org.springframework.http.HttpStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,19 +21,32 @@ public class SavedPostController {
     @PostMapping("/{postId}/save/{userId}")
     public ResponseEntity<String> savePost(
             @PathVariable UUID postId,
-            @PathVariable UUID userId) {
+            @PathVariable UUID userId,
+            @RequestAttribute("authenticatedUser") AuthenticatedUser user) {
+        if (!user.getUserId().equals(userId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         return ResponseEntity.ok(savedPostService.savePost(postId, userId));
     }
 
     @DeleteMapping("/{postId}/save/{userId}")
     public ResponseEntity<String> unsavePost(
             @PathVariable UUID postId,
-            @PathVariable UUID userId) {
+            @PathVariable UUID userId,
+            @RequestAttribute("authenticatedUser") AuthenticatedUser user) {
+        if (!user.getUserId().equals(userId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         return ResponseEntity.ok(savedPostService.unsavePost(postId, userId));
     }
 
     @GetMapping("/saved/{userId}")
-    public ResponseEntity<List<PostResponse>> getSavedPosts(@PathVariable UUID userId) {
+    public ResponseEntity<List<PostResponse>> getSavedPosts(
+            @PathVariable UUID userId,
+            @RequestAttribute("authenticatedUser") AuthenticatedUser user) {
+        if (!user.getUserId().equals(userId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         return ResponseEntity.ok(savedPostService.getFullSavedPosts(userId));
     }
 }
