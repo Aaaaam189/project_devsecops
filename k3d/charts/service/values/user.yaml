@@ -23,16 +23,16 @@ env:
 
 envFromSecret:
   SPRING_DATASOURCE_USERNAME:
-    secretName: postgres-credentials
+    secretName: postgres-app-credentials
     secretKey: username
   SPRING_DATASOURCE_PASSWORD:
-    secretName: postgres-credentials
+    secretName: postgres-app-credentials
     secretKey: password
   DB_USERNAME:
-    secretName: postgres-credentials
+    secretName: postgres-app-credentials
     secretKey: username
   DB_PASSWORD:
-    secretName: postgres-credentials
+    secretName: postgres-app-credentials
     secretKey: password
   JWT_SECRET:
     secretName: jwt-secret

@@ -5,5 +5,5 @@ metadata:
   labels:
     app.kubernetes.io/part-of: foundersync
 data:
-  init-databases.sql: |
-{{ .Files.Get "files/init-databases.sql" | indent 4 }}
+  init-databases.sh: |
+{{ .Files.Get "files/init-databases.sh" | indent 4 }}
