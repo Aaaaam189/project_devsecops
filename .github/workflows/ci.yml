@@ -29,6 +29,7 @@ jobs:
           MONGO_ADMIN_PASSWORD: ci-mongodb-password
           RABBITMQ_ADMIN_PASSWORD: ci-rabbitmq-admin-password
           RABBITMQ_APP_PASSWORD: ci-rabbitmq-app-password
+          MONGO_CHAT_PASSWORD: ci-mongodb-chat-password
         run: docker compose config --quiet
 
   java-tests:
