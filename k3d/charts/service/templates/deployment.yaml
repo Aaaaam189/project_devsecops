@@ -75,15 +75,29 @@ spec:
               memory: {{ .Values.resources.requests.memory }}
             limits:
               memory: {{ .Values.resources.limits.memory }}
-          {{- if .Values.configRepo.enabled }}
+          {{- if or .Values.configRepo.enabled .Values.extraSecretMounts }}
           volumeMounts:
+            {{- if .Values.configRepo.enabled }}
             - name: config-repo
               mountPath: {{ .Values.configRepo.mountPath }}
               readOnly: true
+            {{- end }}
+            {{- range .Values.extraSecretMounts }}
+            - name: {{ .name }}
+              mountPath: {{ .mountPath }}
+              readOnly: true
+            {{- end }}
           {{- end }}
-      {{- if .Values.configRepo.enabled }}
+      {{- if or .Values.configRepo.enabled .Values.extraSecretMounts }}
       volumes:
+        {{- if .Values.configRepo.enabled }}
         - name: config-repo
           configMap:
             name: {{ include "service.name" . }}-config-repo
+        {{- end }}
+        {{- range .Values.extraSecretMounts }}
+        - name: {{ .name }}
+          secret:
+            secretName: {{ .secretName }}
+        {{- end }}
       {{- end }}

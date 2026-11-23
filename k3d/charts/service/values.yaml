@@ -95,3 +95,14 @@ serviceAccount:
 configRepo:
   enabled: false
   mountPath: /config-repo
+
+# Extra Secrets mounted read-only into the container, as a list of
+# {name, secretName, mountPath}. Used to give the Java services the
+# RabbitMQ CA certificate so they can verify the broker's TLS certificate
+# (the rabbitmq-ca Secret, created by k3d/scripts/create-rabbitmq-ca.sh).
+# Example:
+#   extraSecretMounts:
+#     - name: rabbitmq-ca
+#       secretName: rabbitmq-ca
+#       mountPath: /etc/rabbitmq-ca
+extraSecretMounts: []

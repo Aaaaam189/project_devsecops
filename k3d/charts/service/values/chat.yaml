@@ -28,6 +28,7 @@ env:
   RABBITMQ_HOST: "rabbitmq"
   RABBITMQ_PORT: "5671"
   RABBITMQ_PROTOCOL: "amqps"
+  RABBITMQ_CA_FILE: "/etc/rabbitmq-ca/ca.crt"
   RABBITMQ_VIRTUAL_HOST: "/foundersync"
   AWS_REGION: "eu-west-3"
   AWS_ACCESS_KEY_ID: ""
@@ -51,6 +52,14 @@ envFromSecret:
   JWT_SECRET:
     secretName: jwt-secret
     secretKey: secret
+
+# The CA that signed the broker's certificate, so chat-service can verify
+# it. rabbitmq.js reads RABBITMQ_CA_FILE and refuses to connect over amqps
+# without it.
+extraSecretMounts:
+  - name: rabbitmq-ca
+    secretName: rabbitmq-ca
+    mountPath: /etc/rabbitmq-ca
 
 # Node, single process, no JVM heap overhead — much lighter than the
 # Spring Boot services.
