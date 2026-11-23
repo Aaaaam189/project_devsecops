@@ -1,0 +1,40 @@
+Attack suite run: 20261123-225601
+Mode: green
+Target: k3d (gateway localhost:8080)
+============================================================
+
+---- attack-authz.sh ----
+Victim (A)   userId: aa4a6008-3356-470c-91d8-d7d9501329a1
+Attacker (B) userId: ae6d9e7c-fe8a-494b-99f0-d664ea758313
+
+[ATTACK] read-any-notifications-no-token (status 401) -> BLOCKED
+[ATTACK] impersonate-and-post-as-victim (status 401) -> BLOCKED
+[ATTACK] delete-another-users-profile-no-token (before=200, delete=400, after=200) -> BLOCKED
+(exit code: 0)
+
+---- attack-credentials-k3d.sh ----
+[ATTACK] rabbitmq-management-guest-guest (status 000) -> BLOCKED
+[ATTACK] rabbitmq-broker-guest-guest (REJECTED: ConnectionRefusedError) -> BLOCKED
+[ATTACK] rabbitmq-management-port-reachable (status 000) -> BLOCKED
+[ATTACK] postgres-weak-password (NONE; tried postgres/foundersync_app with 8 common passwords) -> BLOCKED
+[ATTACK] mongodb-no-auth-read-messages (MongoNetworkError: connect ECONNREFUSED 10.43.239.9:27017) -> BLOCKED
+(exit code: 0)
+
+---- attack-network-k3d.sh ----
+[ATTACK] config-server-leaks-literal-secret (STATUS=000 LITERAL_SECRET=no; config-server not reachable from this pod, body not checked) -> BLOCKED
+[ATTACK] config-server-reachable-from-any-pod (STATUS=000 LITERAL_SECRET=no) -> BLOCKED
+[ATTACK] direct-port-bypass-gateway (no response, port not reachable from the host) -> BLOCKED
+[ATTACK] wrong-caller-throwaway-pod (status 000, connection refused or reset) -> BLOCKED
+(exit code: 0)
+
+---- attack-forged-token.sh ----
+Victim userId: 00e9ad45-8a9e-439b-8807-f12d535ad406 (forge-victim-1795474640-1029@test.com)
+
+[ATTACK] forged-token-random-secret-control (status 500) -> BLOCKED
+[ATTACK] forged-token-real-secret-privilege-escalation (status 200, self-signed ADMIN token accepted) -> SUCCEEDED (expected, documented residual risk)
+[ATTACK] forged-token-real-secret-account-takeover (status 200, minted a valid token for a real account with no password) -> SUCCEEDED (expected, documented residual risk)
+(exit code: 0)
+
+============================================================
+Summary: 13 blocked, 2 succeeded (2 of those are the documented residual risk)
+RESULT: PASS (every attack blocked, or only the documented residual risk succeeded)
