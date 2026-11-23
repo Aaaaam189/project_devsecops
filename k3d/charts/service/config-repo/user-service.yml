@@ -9,7 +9,7 @@ spring:
     show-sql: false
   rabbitmq:
     host: rabbitmq
-    port: 5672
+    port: ${SPRING_RABBITMQ_PORT}
     username: ${SPRING_RABBITMQ_USERNAME}
     password: ${SPRING_RABBITMQ_PASSWORD}
 
@@ -21,7 +21,7 @@ springdoc:
 
 app:
   jwt:
-    secret: ${JWT_SECRET:founderssync_jwt_secret_minimum_32_characters_ok}
+    secret: ${JWT_SECRET}
   aws:
     access-key: ${AWS_ACCESS_KEY:dummy-access-key}
     secret-key: ${AWS_SECRET_KEY:dummy-secret-key}

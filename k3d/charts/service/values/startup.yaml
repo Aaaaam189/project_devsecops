@@ -1,6 +1,7 @@
 # startup-service — Spring Boot, Postgres (startup_db) + RabbitMQ.
-# No JWT_SECRET env in docker-compose.yml for this service, so none
-# referenced here either.
+# Verifies JWTs in its AuthFilter, so it needs JWT_SECRET. config-repo
+# used to hold the secret as a literal string; it now holds ${JWT_SECRET}
+# and the value comes from the jwt-secret Secret.
 
 nameOverride: startup-service
 
@@ -44,6 +45,9 @@ envFromSecret:
   SPRING_RABBITMQ_PASSWORD:
     secretName: rabbitmq-app-credentials
     secretKey: password
+  JWT_SECRET:
+    secretName: jwt-secret
+    secretKey: secret
 
 resources:
   requests:
