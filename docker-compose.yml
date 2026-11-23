@@ -135,7 +135,7 @@ services:
       MAIL_USERNAME: ${MAIL_USERNAME:-}
       MAIL_PASSWORD: ${MAIL_PASSWORD:-}
       ADMIN_USERNAME: ${ADMIN_USERNAME:-admin@foundersync.com}
-      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin123}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?Set ADMIN_PASSWORD in .env}
       AWS_ACCESS_KEY: ${USER_AWS_ACCESS_KEY:-dummy-access-key}
       AWS_SECRET_KEY: ${USER_AWS_SECRET_KEY:-dummy-secret-key}
       AWS_BUCKET_NAME: ${USER_AWS_BUCKET_NAME:-founderssync-uploads}
