@@ -1,11 +1,11 @@
-Attack suite run: 20261123-225601
+Attack suite run: 20261123-230915
 Mode: green
 Target: k3d (gateway localhost:8080)
 ============================================================
 
 ---- attack-authz.sh ----
-Victim (A)   userId: aa4a6008-3356-470c-91d8-d7d9501329a1
-Attacker (B) userId: ae6d9e7c-fe8a-494b-99f0-d664ea758313
+Victim (A)   userId: c6ff9f6d-4015-4cdd-9de3-e95f458920a6
+Attacker (B) userId: 59f67561-b2f7-47d0-a3bc-f14e9dde9117
 
 [ATTACK] read-any-notifications-no-token (status 401) -> BLOCKED
 [ATTACK] impersonate-and-post-as-victim (status 401) -> BLOCKED
@@ -28,7 +28,7 @@ Attacker (B) userId: ae6d9e7c-fe8a-494b-99f0-d664ea758313
 (exit code: 0)
 
 ---- attack-forged-token.sh ----
-Victim userId: 00e9ad45-8a9e-439b-8807-f12d535ad406 (forge-victim-1795474640-1029@test.com)
+Victim userId: b1d33f1a-c0b2-4029-b170-7af562917093 (forge-victim-1795475433-1130@test.com)
 
 [ATTACK] forged-token-random-secret-control (status 500) -> BLOCKED
 [ATTACK] forged-token-real-secret-privilege-escalation (status 200, self-signed ADMIN token accepted) -> SUCCEEDED (expected, documented residual risk)
