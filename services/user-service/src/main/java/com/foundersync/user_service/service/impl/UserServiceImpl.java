@@ -109,8 +109,15 @@ public class UserServiceImpl implements UserService {
                 .build();
     }
 
+    // Deliberately NOT @Transactional. With a transaction around this whole
+    // method, save() only queues the INSERT and the unique-constraint check runs
+    // at commit, after this method has returned, so the catch block below never
+    // sees the DataIntegrityViolationException and the request fails with a 500.
+    // Without it, each repository call runs in its own transaction: save()
+    // commits (and the constraint is checked) inside the try block, and the
+    // re-fetch runs in a fresh transaction. UserProfile has no lazy associations,
+    // so nothing here needs a surrounding transaction.
     @Override
-    @Transactional
     public UserProfileResponse getMyProfile(String authHeader) {
         UUID userId = jwtUtil.extractUserId(authHeader);
         String email = jwtUtil.extractEmail(authHeader);
