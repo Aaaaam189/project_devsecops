@@ -1,0 +1,166 @@
+# One AuthorizationPolicy per service, built from docs/call-matrix.md.
+#
+# How it works: with PeerAuthentication STRICT (k3d/istio-peer-authentication.yaml)
+# every call between meshed pods is mutual TLS, so the receiving sidecar knows
+# the caller's ServiceAccount. A workload that has at least one ALLOW policy
+# refuses every request that matches none of its rules (HTTP 403). So each
+# policy below is a list of the only callers allowed in.
+#
+# Caller identity format: cluster.local/ns/<namespace>/sa/<serviceaccount>.
+# The chart creates one ServiceAccount per service, named after the release.
+# The entry point is Istio's ingress gateway, which runs in istio-system.
+#
+# Not covered: postgres, mongodb and rabbitmq have no sidecar (they are
+# outside the mesh), so these policies do not apply to them.
+---
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: frontend
+  namespace: foundersync
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: frontend
+  action: ALLOW
+  rules:
+    - from:
+        - source:
+            principals:
+              - cluster.local/ns/istio-system/sa/istio-ingressgateway-service-account
+---
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: api-gateway
+  namespace: foundersync
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: api-gateway
+  action: ALLOW
+  rules:
+    - from:
+        - source:
+            principals:
+              - cluster.local/ns/istio-system/sa/istio-ingressgateway-service-account
+---
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: auth-service
+  namespace: foundersync
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: auth-service
+  action: ALLOW
+  rules:
+    - from:
+        - source:
+            principals:
+              - cluster.local/ns/foundersync/sa/api-gateway
+---
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: user-service
+  namespace: foundersync
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: user-service
+  action: ALLOW
+  rules:
+    - from:
+        - source:
+            principals:
+              - cluster.local/ns/foundersync/sa/api-gateway
+              - cluster.local/ns/foundersync/sa/post-service
+              - cluster.local/ns/foundersync/sa/notification-service
+              - cluster.local/ns/foundersync/sa/chat-service
+---
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: startup-service
+  namespace: foundersync
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: startup-service
+  action: ALLOW
+  rules:
+    - from:
+        - source:
+            principals:
+              - cluster.local/ns/foundersync/sa/api-gateway
+---
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: post-service
+  namespace: foundersync
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: post-service
+  action: ALLOW
+  rules:
+    - from:
+        - source:
+            principals:
+              - cluster.local/ns/foundersync/sa/api-gateway
+---
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: chat-service
+  namespace: foundersync
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: chat-service
+  action: ALLOW
+  rules:
+    - from:
+        - source:
+            principals:
+              - cluster.local/ns/foundersync/sa/api-gateway
+---
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: notification-service
+  namespace: foundersync
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: notification-service
+  action: ALLOW
+  rules:
+    - from:
+        - source:
+            principals:
+              - cluster.local/ns/foundersync/sa/api-gateway
+---
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: config-server
+  namespace: foundersync
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: config-server
+  action: ALLOW
+  rules:
+    - from:
+        - source:
+            principals:
+              - cluster.local/ns/foundersync/sa/api-gateway
+              - cluster.local/ns/foundersync/sa/auth-service
+              - cluster.local/ns/foundersync/sa/user-service
+              - cluster.local/ns/foundersync/sa/startup-service
+              - cluster.local/ns/foundersync/sa/post-service
+              - cluster.local/ns/foundersync/sa/notification-service

@@ -98,3 +98,54 @@ spec:
       ports:
         - protocol: TCP
           port: 5671
+---
+# Istio ingress gateway (namespace istio-system) -> frontend and api-gateway.
+# Traffic no longer comes from Traefik in kube-system: Traefik hands over to
+# istio-ingressgateway, which then calls the pods. allow-traefik above is
+# therefore not needed any more; it is left in place and harmless.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-istio-ingressgateway
+  namespace: foundersync
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: istio-system
+          podSelector:
+            matchLabels:
+              istio: ingressgateway
+      ports:
+        - protocol: TCP
+          port: 3000
+        - protocol: TCP
+          port: 8080
+---
+# Every sidecar fetches its certificates and routing config from istiod
+# (port 15012, mTLS). Without this, default-deny blocks the sidecars and no
+# pod can start.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-istiod
+  namespace: foundersync
+spec:
+  podSelector: {}
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: istio-system
+          podSelector:
+            matchLabels:
+              app: istiod
+      ports:
+        - protocol: TCP
+          port: 15012

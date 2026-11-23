@@ -30,14 +30,10 @@ spec:
         - name: rabbitmq
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           ports:
-            - name: amqp
-              containerPort: 5672
             {{- if .Values.tls.enabled }}
             - name: amqps
               containerPort: 5671
             {{- end }}
-            - name: management
-              containerPort: 15672
           env:
             - name: RABBITMQ_DEFAULT_USER
               valueFrom:

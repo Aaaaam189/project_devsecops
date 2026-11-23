@@ -95,6 +95,13 @@ TOTAL_EXPECTED=0
         if [ "$unexpected_lines" -gt 0 ]; then
             OVERALL_RESULT=1
         fi
+
+        # Exit code 2 means the script could not run its checks (setup failed).
+        # Missing results are not passing results, so the whole suite fails.
+        if [ "$script_exit" -eq 2 ]; then
+            echo "SETUP FAILED in $script: its checks did not run"
+            OVERALL_RESULT=1
+        fi
     done
 
     echo "============================================================"

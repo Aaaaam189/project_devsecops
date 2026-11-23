@@ -7,7 +7,16 @@ metadata:
     app.kubernetes.io/part-of: foundersync
 data:
   rabbitmq.conf: |
-    listeners.tcp.default = 5672
+    # Plain AMQP (5672) is off. A tcpdump showed it exposes the user name, the
+    # password and the message body (evidence/green/rabbitmq-tcpdump-plain-vs-tls.txt).
+    # Every client uses amqps on 5671.
+    listeners.tcp = none
+    # The management plugin (this is the 3-management image) listens on every
+    # interface by default, so the pod IP would expose the admin API even with
+    # no Service port. Bind it to loopback: kubectl port-forward still works
+    # (it connects from inside the pod), nothing else in the cluster can reach it.
+    management.tcp.port = 15672
+    management.tcp.ip = 127.0.0.1
     listeners.ssl.default = 5671
     ssl_options.cacertfile = /etc/rabbitmq/tls/ca.crt
     ssl_options.certfile = /etc/rabbitmq/tls/tls.crt
