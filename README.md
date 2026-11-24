@@ -1,81 +1,125 @@
-# FoundersSync
+# FoundersSync: Securing Inter-Microservice Communication
 
-> **Plateforme de simulation de création de startup et de mise en relation de jeunes co-fondateurs.**
 
-[![Status](https://img.shields.io/badge/Status-In%20Development-blue.svg)]()
-[![Team](https://img.shields.io/badge/Team-Owana-success.svg)]()
+![Status](https://img.shields.io/badge/status-in%20development-blue?style=flat-square)
+![Kubernetes](https://img.shields.io/badge/Kubernetes-k3d-326CE5?style=flat-square&logo=kubernetes&logoColor=white)
+![Istio](https://img.shields.io/badge/Istio-mTLS%20STRICT-466BB0?style=flat-square&logo=istio&logoColor=white)
+![GitHub Actions](https://img.shields.io/badge/CI%2FCD-GitHub%20Actions-2088FF?style=flat-square&logo=githubactions&logoColor=white)
+![Semgrep](https://img.shields.io/badge/SAST-Semgrep-1B2A49?style=flat-square)
+![Trivy](https://img.shields.io/badge/Scan-Trivy-1904DA?style=flat-square)
+![Gitleaks](https://img.shields.io/badge/Secrets-Gitleaks-DC143C?style=flat-square)
+![OWASP](https://img.shields.io/badge/OWASP-Top%2010-000000?style=flat-square&logo=owasp&logoColor=white)
 
-## À quoi consiste le projet ?
-**FoundersSync** est une plateforme interactive et collaborative conçue pour les jeunes entrepreneurs et étudiants qui souhaitent vivre l'expérience réelle de la création d'une startup, mais dans un environnement simulé et sans risque. 
 
-Le projet consiste à offrir un écosystème en ligne où les utilisateurs peuvent non seulement trouver des co-fondateurs possédant des compétences complémentaires (développement, design, marketing, finance), mais aussi suivre un processus structuré pour transformer une idée en un projet d'entreprise viable. La plateforme sert de "bac à sable" pour valider des concepts, structurer des business models et collaborer sur le développement d'un produit.
 
-## Les Acteurs du Système
+A DevSecOps project that secures the communication between the microservices of **FoundersSync**, a platform connecting young co-founders. The application is deployed on Kubernetes and protected by an authentication and authorization module built around identity, encryption, and least privilege.
 
-### Acteurs Principaux
-* **Le Porteur de Projet (Fondateur) :** Il propose une idée de startup, cherche à constituer une équipe autour de sa vision et gère la direction globale du projet.
-* **Le Co-fondateur (Associé) :** Il cherche à rejoindre un projet existant et apporte son expertise spécifique (technique, commerciale, ou créative) pour compléter l'équipe.
+> ENSIAS, 3rd year Software Engineering, DevSecOps project, 2026–2027
 
-### Acteurs Secondaires
-* **L'Administrateur :** Il gère la plateforme, modère les projets et les utilisateurs, et s'assure du bon fonctionnement général du système.
+## Overview
 
-## Les Étapes de la Simulation
-Le parcours utilisateur sur FoundersSync est structuré en plusieurs phases clés, imitant le cycle de vie réel d'une startup :
+FoundersSync is made of nine deployable components: six microservices (five Spring Boot, one Node.js), an API gateway, a configuration server, and a Next.js frontend. They rely on PostgreSQL, MongoDB, and RabbitMQ.
 
-1. **Idéation :** Les utilisateurs s'inscrivent, définissent leurs compétences et soumettent une idée de startup (ou explorent celles des autres).
-2. **Formation de l'Équipe :** Mise en relation stratégique pour former l'équipe fondatrice idéale, avec une répartition initiale des rôles.
-3. **Structuration (Business Planning) :** Élaboration collaborative du Business Model Canvas, validation de l'idée et définition de la proposition de valeur.
-4. **Développement (MVP) :** Gestion de projet intégrée pour le développement du Produit Minimum Viable (répartition des tâches, suivi d'avancement).
-5. **Pitch & Lancement Virtuel :** Soumission du projet final (Pitch Deck) pour évaluation et simulation de levée de fonds ou de lancement sur le marché.
+In its original form, the application had several weaknesses in how its components talk to each other: a shared and public JWT secret, unauthenticated internal calls, default credentials, and unencrypted messaging. This project addresses them in layers, without redesigning the application.
 
-## Stack Technologique
-Pour assurer une architecture robuste, évolutive et moderne, nous avons opté pour la stack suivante :
+## Security Approach
 
-### Frontend 
-* **Next.js :** Framework principal pour la création d'une interface dynamique et réactive.
-* **TypeScript / HTML / CSS :** Pour un code typé, maintenable et un design responsive.
+The module protects the application on two complementary levels.
 
-### Backend 
-* **Spring Boot :** Pour la création d'une API RESTful robuste, sécurisée et facile à maintenir.
-* **Spring Security / JWT :** Gestion de l'authentification et de l'autorisation des utilisateurs de manière sécurisée.
+**User layer** answers *who is the person and what can they do?*
+- JWT tokens issued by a dedicated authentication service
+- Token verification in each service
+- Role-based access (USER, ADMIN) and an ownership rule
 
-### Base de Données
-* **PostgreSQL :** Base de données relationnelle pour le stockage des profils, projets et équipes.
-  
-## L'Équipe Owana
-Ce projet est développé dans le cadre de la filière GL par :
-* **Ouafaa REDDAME**
-* **Wissal KALLAH**
-* **Aya MLOUKI**
-* **Nada MESBAH**
+**Service layer** answers *which service is calling and may it reach its target?*
+- Mutual TLS between services (Istio service mesh)
+- Authorization policies derived from the call matrix between services
+- Default-deny network policies
+- Secrets kept out of the repository
+- Encrypted messaging (RabbitMQ over TLS)
 
-## Istio setup
+The design follows the **Zero Trust** principle: no implicit trust based on network position, and every request is verified.
 
-RabbitMQ is kept outside the Istio mesh and uses broker TLS. Application pods
-connect to RabbitMQ over port `5671`.
+## Architecture
 
-Install Istio from the repository script. The script intentionally pins:
-
-- Istio version: `1.24.3`
-- Profile: `demo`
-- Ingress gateway namespace: `istio-system`
-- Application namespace: `foundersync`
-
-```bash
-./k3d/scripts/install-istio.sh
+```
+Browser
+   |
+Ingress (Istio gateway)
+   |
+API Gateway --> Microservices (auth, user, startup, post, notification, chat)
+                    |                     |
+              PostgreSQL / MongoDB     RabbitMQ (TLS)
 ```
 
-Install `istioctl 1.24.3` first. For Scoop:
+All services run in a Kubernetes namespace with a sidecar proxy per pod, strict mTLS, and per-service authorization policies.
 
-```powershell
-scoop bucket add main
-scoop install istioctl
+## Project Phases
+
+1. **Foundations**: reproducible baseline, automated CI checks, container images, and attack scripts run against the original application.
+2. **Local Kubernetes**: migration from Docker Compose to a k3d cluster, with Helm charts for data components and services.
+3. **Security hardening**: dedicated credentials, Istio mTLS and authorization policies, network isolation, and encrypted messaging.
+4. **Validation**: the same attack scenarios replayed against the secured cluster to prove the improvement.
+
+## DevSecOps Pipelines
+
+Automated GitHub Actions workflows run on every change:
+
+| Concern | Tooling |
+|---|---|
+| Secret detection | Gitleaks |
+| Static code analysis | Semgrep |
+| Dependency and image scanning | Trivy |
+| Dockerfile quality | Hadolint |
+| Build, tests, and images | Maven, npm, Docker Buildx |
+| Kubernetes manifest validation | Helm lint, kubeconform |
+
+## Results
+
+Automated attacks were replayed before and after hardening:
+
+| | Before | After |
+|---|---|---|
+| Successful attacks | 12 / 13 | 2 / 15 |
+
+The two remaining attacks involve an attacker who already holds the shared signing secret, which is documented as a known limitation.
+
+## Known Limitations
+
+- Shared symmetric JWT secret (HMAC); asymmetric signing (RS256) is the recommended next step
+- Access tokens remain valid until expiry (no revocation list)
+- Database and message broker accounts are shared across services
+- Kubernetes Secrets are base64-encoded, not encrypted at rest
+- Image vulnerability scans are informative and do not block the pipeline
+
+## Technology Stack
+
+**Application**: Spring Boot, Spring Security, Node.js, Socket.IO, Next.js  
+**Data and messaging**: PostgreSQL, MongoDB, RabbitMQ  
+**Platform**: Docker, Kubernetes (k3d), Helm, Istio  
+**CI/CD and security**: GitHub Actions, Gitleaks, Semgrep, Trivy, Hadolint
+
+## Repository Layout
+
+```
+.
+├── services/        # Microservices
+├── infrastructure/  # API gateway and config server
+├── frontend/        # Next.js application
+├── charts/          # Helm charts
+├── scripts/         # Smoke test and attack scripts
+├── evidence/        # Attack results (before / after)
+├── .github/         # CI/CD workflows
+└── docs/            # Project report
 ```
 
-Verify that Scoop installed the required version before running the script:
+## Documentation
 
-```bash
-istioctl version --remote=false
-```
+The full report (architecture, justification of choices, deployment process, validation, and trade-offs) is available in the `docs/` folder.
 
-The script rejects a different client version instead of silently mixing releases.
+## Authors
+
+- Alae Labhal
+- Aya Mlouki
+
+Supervised by **Driss Bouzidi**, ENSIAS.
