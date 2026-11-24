@@ -27,6 +27,10 @@ spring:
       simple:
         auto-startup: false
 
+app:
+  jwt:
+    secret: test_jwt_secret_minimum_32_characters_for_testing_purposes_only
+
 server:
   port: 0
 
