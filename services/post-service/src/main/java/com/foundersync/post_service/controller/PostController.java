@@ -2,6 +2,7 @@ package com.foundersync.post_service.controller;
 
 import com.foundersync.post_service.dto.PostRequest;
 import com.foundersync.post_service.dto.PostResponse;
+import com.foundersync.post_service.security.AuthenticatedUser;
 import com.foundersync.post_service.service.PostService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -20,19 +21,38 @@ public class PostController {
 
     // Créer un post
     @PostMapping
-    public ResponseEntity<PostResponse> createPost(@RequestBody PostRequest request) {
+    public ResponseEntity<PostResponse> createPost(
+            @RequestBody PostRequest request,
+            @RequestAttribute("authenticatedUser") AuthenticatedUser user) {
+        request.setUserId(user.getUserId());
         return ResponseEntity.status(HttpStatus.CREATED).body(postService.createPost(request));
     }
 
     // Modifier un post
     @PutMapping("/{id}")
-    public ResponseEntity<PostResponse> updatePost(@PathVariable UUID id, @RequestBody PostRequest request) {
+    public ResponseEntity<PostResponse> updatePost(
+            @PathVariable UUID id,
+            @RequestBody PostRequest request,
+            @RequestAttribute("authenticatedUser") AuthenticatedUser user) {
+        UUID authenticatedUserId = user.getUserId();
+        PostResponse existing = postService.getPostById(id);
+        if (!authenticatedUserId.equals(existing.getUserId())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        request.setUserId(authenticatedUserId);
         return ResponseEntity.ok(postService.updatePost(id, request));
     }
 
     // Supprimer un post
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deletePost(@PathVariable UUID id) {
+    public ResponseEntity<Void> deletePost(
+            @PathVariable UUID id,
+            @RequestAttribute("authenticatedUser") AuthenticatedUser user) {
+        UUID authenticatedUserId = user.getUserId();
+        PostResponse existing = postService.getPostById(id);
+        if (!authenticatedUserId.equals(existing.getUserId())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         postService.deletePost(id);
         return ResponseEntity.noContent().build();
     }

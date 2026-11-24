@@ -1,0 +1,573 @@
+# Network layer of the Phase 3 segmentation. Istio (mTLS + AuthorizationPolicy,
+# k3d/istio-authorization-policies.yaml) decides which service may call which at
+# layer 7. These policies do the same at layer 3/4 and also cover postgres,
+# mongodb and rabbitmq, which have no sidecar and are outside the mesh.
+#
+# Model: default-deny blocks everything, then each workload below gets exactly
+# the connections in docs/call-matrix.md (callers in, callees out). There is no
+# "every pod may talk to every pod" rule any more.
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny
+  namespace: foundersync
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+    - Egress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-dns
+  namespace: foundersync
+spec:
+  podSelector: {}
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-traefik
+  namespace: foundersync
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+      ports:
+        - protocol: TCP
+          port: 80
+        - protocol: TCP
+          port: 3000
+        - protocol: TCP
+          port: 8080
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-rabbitmq-tls-clients
+  namespace: foundersync
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: rabbitmq
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchExpressions:
+              - key: app.kubernetes.io/name
+                operator: In
+                values:
+                  - auth-service
+                  - user-service
+                  - startup-service
+                  - post-service
+                  - notification-service
+                  - chat-service
+      ports:
+        - protocol: TCP
+          port: 5671
+---
+# Istio ingress gateway (namespace istio-system) -> frontend and api-gateway.
+# Traffic no longer comes from Traefik in kube-system: Traefik hands over to
+# istio-ingressgateway, which then calls the pods. allow-traefik above is
+# therefore not needed any more; it is left in place and harmless.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-istio-ingressgateway
+  namespace: foundersync
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: istio-system
+          podSelector:
+            matchLabels:
+              istio: ingressgateway
+      ports:
+        - protocol: TCP
+          port: 3000
+        - protocol: TCP
+          port: 8080
+---
+# Every sidecar fetches its certificates and routing config from istiod
+# (port 15012, mTLS). Without this, default-deny blocks the sidecars and no
+# pod can start.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-istiod
+  namespace: foundersync
+spec:
+  podSelector: {}
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: istio-system
+          podSelector:
+            matchLabels:
+              app: istiod
+      ports:
+        - protocol: TCP
+          port: 15012
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: api-gateway-traffic
+  namespace: foundersync
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: api-gateway
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: config-server
+      ports:
+        - protocol: TCP
+          port: 8888
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: auth-service
+      ports:
+        - protocol: TCP
+          port: 8081
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: user-service
+      ports:
+        - protocol: TCP
+          port: 8082
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: startup-service
+      ports:
+        - protocol: TCP
+          port: 8083
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: post-service
+      ports:
+        - protocol: TCP
+          port: 8084
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: chat-service
+      ports:
+        - protocol: TCP
+          port: 8085
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: notification-service
+      ports:
+        - protocol: TCP
+          port: 8086
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: auth-service-traffic
+  namespace: foundersync
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: auth-service
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: api-gateway
+      ports:
+        - protocol: TCP
+          port: 8081
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: config-server
+      ports:
+        - protocol: TCP
+          port: 8888
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: postgres
+      ports:
+        - protocol: TCP
+          port: 5432
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: rabbitmq
+      ports:
+        - protocol: TCP
+          port: 5671
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: user-service-traffic
+  namespace: foundersync
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: user-service
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: api-gateway
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: post-service
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: notification-service
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: chat-service
+      ports:
+        - protocol: TCP
+          port: 8082
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: config-server
+      ports:
+        - protocol: TCP
+          port: 8888
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: postgres
+      ports:
+        - protocol: TCP
+          port: 5432
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: rabbitmq
+      ports:
+        - protocol: TCP
+          port: 5671
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: startup-service-traffic
+  namespace: foundersync
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: startup-service
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: api-gateway
+      ports:
+        - protocol: TCP
+          port: 8083
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: config-server
+      ports:
+        - protocol: TCP
+          port: 8888
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: postgres
+      ports:
+        - protocol: TCP
+          port: 5432
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: rabbitmq
+      ports:
+        - protocol: TCP
+          port: 5671
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: post-service-traffic
+  namespace: foundersync
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: post-service
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: api-gateway
+      ports:
+        - protocol: TCP
+          port: 8084
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: config-server
+      ports:
+        - protocol: TCP
+          port: 8888
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: postgres
+      ports:
+        - protocol: TCP
+          port: 5432
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: rabbitmq
+      ports:
+        - protocol: TCP
+          port: 5671
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: user-service
+      ports:
+        - protocol: TCP
+          port: 8082
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: chat-service-traffic
+  namespace: foundersync
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: chat-service
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: api-gateway
+      ports:
+        - protocol: TCP
+          port: 8085
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: mongodb
+      ports:
+        - protocol: TCP
+          port: 27017
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: rabbitmq
+      ports:
+        - protocol: TCP
+          port: 5671
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: user-service
+      ports:
+        - protocol: TCP
+          port: 8082
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: notification-service-traffic
+  namespace: foundersync
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: notification-service
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: api-gateway
+      ports:
+        - protocol: TCP
+          port: 8086
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: config-server
+      ports:
+        - protocol: TCP
+          port: 8888
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: postgres
+      ports:
+        - protocol: TCP
+          port: 5432
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: rabbitmq
+      ports:
+        - protocol: TCP
+          port: 5671
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: user-service
+      ports:
+        - protocol: TCP
+          port: 8082
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: config-server-traffic
+  namespace: foundersync
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: config-server
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: api-gateway
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: auth-service
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: user-service
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: startup-service
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: post-service
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: notification-service
+      ports:
+        - protocol: TCP
+          port: 8888
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: postgres-traffic
+  namespace: foundersync
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: postgres
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: auth-service
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: user-service
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: startup-service
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: post-service
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: notification-service
+      ports:
+        - protocol: TCP
+          port: 5432
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: mongodb-traffic
+  namespace: foundersync
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: mongodb
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: chat-service
+      ports:
+        - protocol: TCP
+          port: 27017

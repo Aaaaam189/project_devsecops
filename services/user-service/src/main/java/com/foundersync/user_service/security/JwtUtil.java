@@ -16,7 +16,10 @@ public class JwtUtil {
     private String secret;
 
     public UUID extractUserId(String authHeader) {
-        String token = authHeader.substring(7); // remove "Bearer "
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            throw new IllegalArgumentException("Missing or invalid Authorization header");
+        }
+        String token = authHeader.substring(7);
         Claims claims = Jwts.parser()
                 .verifyWith(getSigningKey())
                 .build()

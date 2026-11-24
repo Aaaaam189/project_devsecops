@@ -41,7 +41,12 @@ public class UserController {
     @Operation(summary = "Update own profile")
     public ResponseEntity<UserProfileResponse> updateProfile(
             @PathVariable UUID userId,
-            @Valid @RequestBody UpdateProfileRequest request) {
+            @Valid @RequestBody UpdateProfileRequest request,
+            @RequestHeader("Authorization") String authHeader) {
+        UUID authenticatedUserId = jwtUtil.extractUserId(authHeader);
+        if (!authenticatedUserId.equals(userId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         return ResponseEntity.ok(userService.updateProfile(userId, request));
     }
 
@@ -54,7 +59,13 @@ public class UserController {
 
     @DeleteMapping("/{userId}")
     @Operation(summary = "Delete profile")
-    public ResponseEntity<Void> deleteProfile(@PathVariable UUID userId) {
+    public ResponseEntity<Void> deleteProfile(
+            @PathVariable UUID userId,
+            @RequestHeader("Authorization") String authHeader) {
+        UUID authenticatedUserId = jwtUtil.extractUserId(authHeader);
+        if (!authenticatedUserId.equals(userId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         userService.deleteProfile(userId);
         return ResponseEntity.noContent().build();
     }

@@ -1,0 +1,40 @@
+Attack suite run: 20261123-202944
+Mode: green
+Target: k3d (gateway localhost:8080)
+============================================================
+
+---- attack-authz.sh ----
+Victim (A)   userId: 4c807f3f-7c27-478c-baf9-e9863de86b6b
+Attacker (B) userId: f3077055-1585-4e07-b961-59633820fab6
+
+[ATTACK] read-any-notifications-no-token (status 401) -> BLOCKED
+[ATTACK] impersonate-and-post-as-victim (status 401) -> BLOCKED
+[ATTACK] delete-another-users-profile-no-token (before=200, delete=400, after=200) -> BLOCKED
+(exit code: 0)
+
+---- attack-credentials-k3d.sh ----
+[ATTACK] rabbitmq-management-guest-guest (status 401) -> BLOCKED
+[ATTACK] rabbitmq-broker-guest-guest (REJECTED: ProbableAuthenticationError) -> BLOCKED
+[ATTACK] rabbitmq-management-port-reachable (status 401, admin interface reachable from any pod) -> SUCCEEDED
+[ATTACK] postgres-weak-password (NONE; tried postgres/foundersync_app with 8 common passwords) -> BLOCKED
+[ATTACK] mongodb-no-auth-read-messages (MongoServerError: Command aggregate requires authentication) -> BLOCKED
+(exit code: 1)
+
+---- attack-network-k3d.sh ----
+[ATTACK] config-server-leaks-literal-secret (STATUS=200 LITERAL_SECRET=no; only ${PLACEHOLDER} values served) -> BLOCKED
+[ATTACK] config-server-reachable-from-any-pod (status 200, any pod can read every service's config) -> SUCCEEDED
+[ATTACK] direct-port-bypass-gateway (no response, port not reachable from the host) -> BLOCKED
+[ATTACK] wrong-caller-throwaway-pod (status 401, reached startup-service directly by name) -> SUCCEEDED
+(exit code: 1)
+
+---- attack-forged-token.sh ----
+Victim userId: d67c0e61-abe6-430f-bdc4-ebcd75287450 (forge-victim-1795465818-361@test.com)
+
+[ATTACK] forged-token-random-secret-control (status 500) -> BLOCKED
+[ATTACK] forged-token-real-secret-privilege-escalation (status 200, self-signed ADMIN token accepted) -> SUCCEEDED (expected, documented residual risk)
+[ATTACK] forged-token-real-secret-account-takeover (status 200, minted a valid token for a real account with no password) -> SUCCEEDED (expected, documented residual risk)
+(exit code: 0)
+
+============================================================
+Summary: 10 blocked, 5 succeeded (2 of those are the documented residual risk)
+RESULT: FAIL (an attack succeeded that is not on the documented residual-risk list)

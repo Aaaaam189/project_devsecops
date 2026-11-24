@@ -1,0 +1,52 @@
+BEFORE closing port 5672. Shows that plain AMQP exposes the user name, the password and the message body, and that TLS (5671) does not.
+TLS records start with 17 03 03 (application data, TLS 1.2). The filter covers every client of the broker, so the hex section also includes the services' own heartbeats.
+
+RabbitMQ capture, taken from the k3d node's network namespace, filter: host 10.42.0.100 and (port 5672 or port 5671)
+Two clients published one message each as the throwaway user tcpdump_demo (dummy password, deleted afterwards).
+
+=== PLAIN AMQP, port 5672: payload as ASCII (lines containing the message, the user or the password) ===
+basic.nackt..connection.blockedt..consumer_cancel_notifyt..exchange_exchange_bindingst..publisher_confirmst..informationS... See https://pika.github.io/pika/.versionS....1.5.0.PLAIN.....tcpdump_demo.demo-not-a-secret.en_US.
+basic.nackt..connection.blockedt..consumer_cancel_notifyt..exchange_exchange_bindingst..publisher_confirmst..informationS... See https://pika.github.io/pika/.versionS....1.5.0.PLAIN.....tcpdump_demo.demo-not-a-secret.en_US.
+..n..'........ FOUNDERSYNC-SECRET-MESSAGE-plain.
+..n..'........ FOUNDERSYNC-SECRET-MESSAGE-plain.
+
+packets on 5672 containing the message text: 2
+
+=== TLS AMQPS, port 5671: first data packets as hex+ASCII ===
+21:53:23.183048 veth189927c3 P   IP 10.42.0.150.48608 > 10.42.0.100.5671: Flags [P.], seq 804716062:804716108, ack 401259992, win 73, options [nop,nop,TS val 81483389 ecr 3078235443], length 46
+	0x0000:  4500 0062 bcd1 4000 4006 6877 0a2a 0096  E..b..@.@.hw.*..
+	0x0010:  0a2a 0064 bde0 1627 2ff6 fe1e 17ea bdd8  .*.d...'/.......
+	0x0020:  8018 0049 15a2 0000 0101 080a 04db 567d  ...I..........V}
+	0x0030:  b77a 2533 1703 0300 29bb 3260 97b0 2564  .z%3....).2`..%d
+	0x0040:  8ba2 16da c5a6 3cf7 346a f058 54f9 7627  ......<.4j.XT.v'
+	0x0050:  dc54 97c2 08f6 bd3f b594 5e37 7085 3d86  .T.....?..^7p.=.
+	0x0060:  892d                                     .-
+21:53:23.183084 veth8fd955dd Out IP 10.42.0.150.48608 > 10.42.0.100.5671: Flags [P.], seq 0:46, ack 1, win 73, options [nop,nop,TS val 81483389 ecr 3078235443], length 46
+	0x0000:  4500 0062 bcd1 4000 4006 6877 0a2a 0096  E..b..@.@.hw.*..
+	0x0010:  0a2a 0064 bde0 1627 2ff6 fe1e 17ea bdd8  .*.d...'/.......
+	0x0020:  8018 0049 15a2 0000 0101 080a 04db 567d  ...I..........V}
+	0x0030:  b77a 2533 1703 0300 29bb 3260 97b0 2564  .z%3....).2`..%d
+	0x0040:  8ba2 16da c5a6 3cf7 346a f058 54f9 7627  ......<.4j.XT.v'
+	0x0050:  dc54 97c2 08f6 bd3f b594 5e37 7085 3d86  .T.....?..^7p.=.
+	0x0060:  892d                                     .-
+21:53:23.257395 veth8fd955dd P   IP 10.42.0.100.5671 > 10.42.0.150.48608: Flags [P.], seq 1:31, ack 46, win 63, options [nop,nop,TS val 3078265444 ecr 81483389], length 30
+	0x0000:  4500 0052 cc09 4000 4006 594f 0a2a 0064  E..R..@.@.YO.*.d
+	0x0010:  0a2a 0096 1627 bde0 17ea bdd8 2ff6 fe4c  .*...'....../..L
+	0x0020:  8018 003f 1592 0000 0101 080a b77a 9a64  ...?.........z.d
+	0x0030:  04db 567d 1703 0300 19e0 296d c6c6 caf9  ..V}......)m....
+	0x0040:  84fc 72ac 88b0 e988 bc62 aa92 81d4 aaf1  ..r......b......
+	0x0050:  03c6                                     ..
+21:53:23.257422 veth189927c3 Out IP 10.42.0.100.5671 > 10.42.0.150.48608: Flags [P.], seq 1:31, ack 46, win 63, options [nop,nop,TS val 3078265444 ecr 81483389], length 30
+	0x0000:  4500 0052 cc09 4000 4006 594f 0a2a 0064  E..R..@.@.YO.*.d
+	0x0010:  0a2a 0096 1627 bde0 17ea bdd8 2ff6 fe4c  .*...'....../..L
+	0x0020:  8018 003f 1592 0000 0101 080a b77a 9a64  ...?.........z.d
+	0x0030:  04db 567d 1703 0300 19e0 296d c6c6 caf9  ..V}......)m....
+	0x0040:  84fc 72ac 88b0 e988 bc62 aa92 81d4 aaf1  ..r......b......
+	0x0050:  03c6                                     ..
+21:53:32.575514 veth3a603b25 P   IP 10.42.0.147.37170 > 10.42.0.100.5671: Flags [P.], seq 1991928015:1991928061, ack 4131594394, win 97, options [nop,nop,TS val 2523219132 ecr 1020920231], length 46
+	0x0000:  4500 0062 8e7d 4000 4006 96ce 0a2a 0093  E..b.}@.@....*..
+	0x0010:  0a2a 0064 9132 1627 76ba 68cf f643 209a  .*.d.2.'v.h..C..
+	0x0020:  8018 0061 159f 0000 0101 080a 9665 44bc  ...a.........eD.
+
+packets on 5671 containing the message text: 0
+packets on 5671 containing the user name:    0

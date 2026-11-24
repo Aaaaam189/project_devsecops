@@ -82,6 +82,12 @@ resources:
 
 podAnnotations: {}
 
+# One ServiceAccount per service, named after the release. Istio
+# AuthorizationPolicies match callers by ServiceAccount, so each service
+# needs its own identity (see docs/call-matrix.md).
+serviceAccount:
+  create: true
+
 # Only config-server sets this to true (values/config-server.yaml).
 # Mounts a ConfigMap built from k3d/charts/service/config-repo/*.yml at
 # /config-repo, replacing docker-compose.yml's
@@ -89,3 +95,14 @@ podAnnotations: {}
 configRepo:
   enabled: false
   mountPath: /config-repo
+
+# Extra Secrets mounted read-only into the container, as a list of
+# {name, secretName, mountPath}. Used to give the Java services the
+# RabbitMQ CA certificate so they can verify the broker's TLS certificate
+# (the rabbitmq-ca Secret, created by k3d/scripts/create-rabbitmq-ca.sh).
+# Example:
+#   extraSecretMounts:
+#     - name: rabbitmq-ca
+#       secretName: rabbitmq-ca
+#       mountPath: /etc/rabbitmq-ca
+extraSecretMounts: []

@@ -8,9 +8,10 @@ spec:
   selector:
     app.kubernetes.io/name: {{ .Chart.Name }}
   ports:
-    - name: amqp
-      port: 5672
-      targetPort: 5672
-    - name: management
-      port: 15672
-      targetPort: 15672
+    {{- if .Values.tls.enabled }}
+    - name: amqps
+      port: 5671
+      targetPort: 5671
+    {{- end }}
+    # No management port (15672): the HTTP admin UI and API are not exposed.
+    # Reach it only on demand: kubectl port-forward deploy/rabbitmq 15672:15672.

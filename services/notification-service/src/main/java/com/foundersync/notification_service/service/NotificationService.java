@@ -97,11 +97,15 @@ public class NotificationService {
         return notificationRepository.countByRecipientIdAndIsReadFalse(userId);
     }
 
-    public void markAsRead(UUID notificationId) {
+    public boolean markAsRead(UUID notificationId, UUID authenticatedUserId) {
         Notification notification = notificationRepository.findById(notificationId)
                 .orElseThrow(() -> new RuntimeException("Notification not found"));
+        if (!notification.getRecipientId().equals(authenticatedUserId)) {
+            return false;
+        }
         notification.setRead(true);
         notificationRepository.save(notification);
+        return true;
     }
 
     public void markAllAsRead(UUID userId) {
@@ -111,7 +115,13 @@ public class NotificationService {
         notificationRepository.saveAll(unread);
     }
 
-    public void delete(UUID notificationId) {
+    public boolean delete(UUID notificationId, UUID authenticatedUserId) {
+        Notification notification = notificationRepository.findById(notificationId)
+                .orElseThrow(() -> new RuntimeException("Notification not found"));
+        if (!notification.getRecipientId().equals(authenticatedUserId)) {
+            return false;
+        }
         notificationRepository.deleteById(notificationId);
+        return true;
     }
 }

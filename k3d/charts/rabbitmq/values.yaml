@@ -2,7 +2,13 @@ image:
   repository: rabbitmq
   tag: 3-management-alpine
 
-credentialsSecret: rabbitmq-credentials
+credentialsSecret: rabbitmq-admin-credentials
+adminCredentialsSecret: rabbitmq-admin-credentials
+appCredentialsSecret: rabbitmq-app-credentials
+
+tls:
+  enabled: true
+  secretName: rabbitmq-tls
 
 resources:
   requests:

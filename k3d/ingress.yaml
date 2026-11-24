@@ -21,7 +21,11 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: foundersync
-  namespace: foundersync
+  # Lives in istio-system, not foundersync: an Ingress can only reference
+  # Services in its own namespace, and its backend is istio-ingressgateway,
+  # which runs in istio-system. Istio's Gateway and VirtualService
+  # (k3d/istio-gateway.yaml) then route to the right service.
+  namespace: istio-system
   annotations:
     # chat-service's Socket.IO connection is a long-lived WebSocket
     # upgrade through api-gateway -> chat-service. Traefik proxies
@@ -45,20 +49,20 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: api-gateway
+                name: istio-ingressgateway
                 port:
-                  number: 8080
+                  number: 80
           - path: /socket.io
             pathType: Prefix
             backend:
               service:
-                name: api-gateway
+                name: istio-ingressgateway
                 port:
-                  number: 8080
+                  number: 80
           - path: /
             pathType: Prefix
             backend:
               service:
-                name: frontend
+                name: istio-ingressgateway
                 port:
-                  number: 3000
+                  number: 80

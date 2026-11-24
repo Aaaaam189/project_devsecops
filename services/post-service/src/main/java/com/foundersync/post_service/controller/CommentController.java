@@ -2,6 +2,7 @@ package com.foundersync.post_service.controller;
 
 import com.foundersync.post_service.entity.Comment;
 import com.foundersync.post_service.service.CommentService;
+import com.foundersync.post_service.security.AuthenticatedUser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,7 +22,11 @@ public class CommentController {
     public ResponseEntity<Comment> addComment(
             @PathVariable UUID postId,
             @PathVariable UUID userId,
-            @RequestBody String content) {
+            @RequestBody String content,
+            @RequestAttribute("authenticatedUser") AuthenticatedUser user) {
+        if (!user.getUserId().equals(userId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(commentService.addComment(postId, userId, content));
     }
@@ -32,7 +37,11 @@ public class CommentController {
             @PathVariable UUID postId,
             @PathVariable UUID parentId,
             @PathVariable UUID userId,
-            @RequestBody String content) {
+            @RequestBody String content,
+            @RequestAttribute("authenticatedUser") AuthenticatedUser user) {
+        if (!user.getUserId().equals(userId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(commentService.addReply(postId, parentId, userId, content));
     }
@@ -40,13 +49,24 @@ public class CommentController {
     @PutMapping("/comments/{commentId}")
     public ResponseEntity<Comment> updateComment(
             @PathVariable UUID commentId,
-            @RequestBody String content) {
-        return ResponseEntity.ok(commentService.updateComment(commentId, content));
+            @RequestBody String content,
+            @RequestAttribute("authenticatedUser") AuthenticatedUser user) {
+        try {
+            return ResponseEntity.ok(commentService.updateComment(commentId, content, user.getUserId()));
+        } catch (SecurityException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
     }
 
     @DeleteMapping("/comments/{commentId}")
-    public ResponseEntity<Void> deleteComment(@PathVariable UUID commentId) {
-        commentService.deleteComment(commentId);
+    public ResponseEntity<Void> deleteComment(
+            @PathVariable UUID commentId,
+            @RequestAttribute("authenticatedUser") AuthenticatedUser user) {
+        try {
+            commentService.deleteComment(commentId, user.getUserId());
+        } catch (SecurityException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         return ResponseEntity.noContent().build();
     }
 
@@ -59,7 +79,11 @@ public class CommentController {
     @PostMapping("/comments/{commentId}/like/{userId}")
     public ResponseEntity<String> likeComment(
             @PathVariable UUID commentId,
-            @PathVariable UUID userId) {
+            @PathVariable UUID userId,
+            @RequestAttribute("authenticatedUser") AuthenticatedUser user) {
+        if (!user.getUserId().equals(userId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         return ResponseEntity.ok(commentService.likeComment(commentId, userId));
     }
 
@@ -67,7 +91,11 @@ public class CommentController {
     @DeleteMapping("/comments/{commentId}/like/{userId}")
     public ResponseEntity<String> unlikeComment(
             @PathVariable UUID commentId,
-            @PathVariable UUID userId) {
+            @PathVariable UUID userId,
+            @RequestAttribute("authenticatedUser") AuthenticatedUser user) {
+        if (!user.getUserId().equals(userId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         return ResponseEntity.ok(commentService.unlikeComment(commentId, userId));
     }
 }

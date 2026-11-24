@@ -32,6 +32,16 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.credentialsSecret }}
                   key: password
+            - name: POSTGRES_APP_USER
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-app-credentials
+                  key: username
+            - name: POSTGRES_APP_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-app-credentials
+                  key: password
             - name: PGDATA
               value: /var/lib/postgresql/data/pgdata
           volumeMounts:

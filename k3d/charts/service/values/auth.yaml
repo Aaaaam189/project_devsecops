@@ -22,30 +22,50 @@ env:
   SPRING_CONFIG_IMPORT: "optional:configserver:http://config-server:8888"
   SPRING_DATASOURCE_URL: "jdbc:postgresql://postgres:5432/auth_db"
   SPRING_RABBITMQ_HOST: "rabbitmq"
+  SPRING_RABBITMQ_PORT: "5671"
+  SPRING_RABBITMQ_SSL_ENABLED: "true"
+  SPRING_RABBITMQ_SSL_BUNDLE: "rabbitmq"
+  SPRING_SSL_BUNDLE_PEM_RABBITMQ_TRUSTSTORE_CERTIFICATE: "file:/etc/rabbitmq-ca/ca.crt"
+  SPRING_RABBITMQ_VIRTUAL_HOST: "/foundersync"
   MAIL_USERNAME: ""
   MAIL_PASSWORD: ""
-  ADMIN_USERNAME: "admin@foundersync.com"
-  ADMIN_PASSWORD: "admin123"
   AWS_ACCESS_KEY: "dummy-access-key"
   AWS_SECRET_KEY: "dummy-secret-key"
   AWS_BUCKET_NAME: "founderssync-uploads"
 
 envFromSecret:
   SPRING_DATASOURCE_USERNAME:
-    secretName: postgres-credentials
+    secretName: postgres-app-credentials
     secretKey: username
   SPRING_DATASOURCE_PASSWORD:
-    secretName: postgres-credentials
+    secretName: postgres-app-credentials
     secretKey: password
   DB_USERNAME:
-    secretName: postgres-credentials
+    secretName: postgres-app-credentials
     secretKey: username
   DB_PASSWORD:
-    secretName: postgres-credentials
+    secretName: postgres-app-credentials
     secretKey: password
   JWT_SECRET:
     secretName: jwt-secret
     secretKey: secret
+  SPRING_RABBITMQ_USERNAME:
+    secretName: rabbitmq-app-credentials
+    secretKey: username
+  SPRING_RABBITMQ_PASSWORD:
+    secretName: rabbitmq-app-credentials
+    secretKey: password
+  ADMIN_USERNAME:
+    secretName: auth-admin-credentials
+    secretKey: username
+  ADMIN_PASSWORD:
+    secretName: auth-admin-credentials
+    secretKey: password
+
+extraSecretMounts:
+  - name: rabbitmq-ca
+    secretName: rabbitmq-ca
+    mountPath: /etc/rabbitmq-ca
 
 resources:
   requests:

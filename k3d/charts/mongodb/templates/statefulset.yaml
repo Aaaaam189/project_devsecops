@@ -20,11 +20,36 @@ spec:
         - name: mongodb
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           args: ["--wiredTigerCacheSizeGB", "{{ .Values.wiredTigerCacheGB }}"]
+          env:
+            - name: MONGO_INITDB_ROOT_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.credentialsSecret }}
+                  key: username
+            - name: MONGO_INITDB_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.credentialsSecret }}
+                  key: password
+            - name: MONGO_CHAT_USER
+              valueFrom:
+                secretKeyRef:
+                  name: mongodb-chat-credentials
+                  key: username
+            - name: MONGO_CHAT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mongodb-chat-credentials
+                  key: password
           ports:
             - containerPort: 27017
           volumeMounts:
             - name: data
               mountPath: /data/db
+            - name: init-chat-user
+              mountPath: /docker-entrypoint-initdb.d/init-mongodb.sh
+              subPath: init-mongodb.sh
+              readOnly: true
           readinessProbe:
             exec:
               command: ["mongosh", "--quiet", "--eval", "db.adminCommand('ping')"]
@@ -33,6 +58,10 @@ spec:
             timeoutSeconds: 10
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
+      volumes:
+        - name: init-chat-user
+          configMap:
+            name: mongodb-init
   volumeClaimTemplates:
     - metadata:
         name: data

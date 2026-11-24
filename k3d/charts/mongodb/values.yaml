@@ -2,6 +2,8 @@ image:
   repository: mongo
   tag: 7-jammy
 
+credentialsSecret: mongodb-credentials
+
 storage:
   size: 1Gi
 

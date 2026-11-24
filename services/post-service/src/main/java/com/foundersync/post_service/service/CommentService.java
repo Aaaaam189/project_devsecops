@@ -74,14 +74,22 @@ public class CommentService {
         return saved;
     }
 
-    public Comment updateComment(UUID commentId, String content) {
+    public Comment updateComment(UUID commentId, String content, UUID authenticatedUserId) {
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new RuntimeException("Comment not found"));
+        if (!comment.getUserId().equals(authenticatedUserId)) {
+            throw new SecurityException("Forbidden");
+        }
         comment.setContent(content);
         return commentRepository.save(comment);
     }
 
-    public void deleteComment(UUID commentId) {
+    public void deleteComment(UUID commentId, UUID authenticatedUserId) {
+        Comment comment = commentRepository.findById(commentId)
+                .orElseThrow(() -> new RuntimeException("Comment not found"));
+        if (!comment.getUserId().equals(authenticatedUserId)) {
+            throw new SecurityException("Forbidden");
+        }
         commentRepository.deleteById(commentId);
     }
 

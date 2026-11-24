@@ -6,5 +6,6 @@ target/
 *.iml
 node_modules/
 .idea/
+k3d/tls/
 CI_FIX_EXPLANATION.md
 QUICK_REFERENCE.md

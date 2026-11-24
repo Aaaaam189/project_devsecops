@@ -13,9 +13,9 @@ spring:
     show-sql: false
   rabbitmq:
     host: rabbitmq
-    port: 5672
-    username: guest
-    password: guest
+    port: ${SPRING_RABBITMQ_PORT}
+    username: ${SPRING_RABBITMQ_USERNAME}
+    password: ${SPRING_RABBITMQ_PASSWORD}
   servlet:
     multipart:
       max-file-size: 5MB

@@ -7,6 +7,7 @@
 # Usage:
 #   ./scripts/attacks/run-all.sh red     # before steps 5-7 (expected: mostly SUCCEEDED)
 #   ./scripts/attacks/run-all.sh green   # after steps 5-7  (expected: mostly BLOCKED)
+#   TARGET=k3d ./scripts/attacks/run-all.sh green   # against the k3d cluster
 #
 # "red" and "green" are just where the output file goes — this script
 # does not itself know which phase you're in, it just runs the same 4
@@ -38,7 +39,23 @@ OUT_DIR="$REPO_ROOT/evidence/$MODE"
 OUT_FILE="$OUT_DIR/$TIMESTAMP.txt"
 mkdir -p "$OUT_DIR"
 
-ATTACKS="attack-authz.sh attack-credentials.sh attack-network.sh attack-forged-token.sh"
+# TARGET=compose (default) runs the Docker Compose versions. TARGET=k3d runs
+# the k3d versions of the credential and network attacks (probes run as
+# throwaway pods) and reads the real JWT secret from .env for the forged
+# token attack. The secret is never printed.
+TARGET="${TARGET:-compose}"
+if [ "$TARGET" = "k3d" ]; then
+    ATTACKS="attack-authz.sh attack-credentials-k3d.sh attack-network-k3d.sh attack-forged-token.sh"
+    if [ -f "$REPO_ROOT/.env" ]; then
+        set -a
+        # shellcheck disable=SC1091
+        . "$REPO_ROOT/.env"
+        set +a
+        export REAL_SECRET="${REAL_SECRET:-${JWT_SECRET:-}}"
+    fi
+else
+    ATTACKS="attack-authz.sh attack-credentials.sh attack-network.sh attack-forged-token.sh"
+fi
 
 # Lines containing this marker never fail the overall run, even though
 # they print SUCCEEDED — this is the documented shared-JWT-secret risk,
@@ -53,7 +70,7 @@ TOTAL_EXPECTED=0
 {
     echo "Attack suite run: $TIMESTAMP"
     echo "Mode: $MODE"
-    echo "Target: localhost (gateway :8080, and published service/db/broker ports)"
+    echo "Target: $TARGET (gateway localhost:8080)"
     echo "============================================================"
     echo
 
@@ -76,6 +93,13 @@ TOTAL_EXPECTED=0
         TOTAL_BLOCKED=$((TOTAL_BLOCKED + blocked_lines))
 
         if [ "$unexpected_lines" -gt 0 ]; then
+            OVERALL_RESULT=1
+        fi
+
+        # Exit code 2 means the script could not run its checks (setup failed).
+        # Missing results are not passing results, so the whole suite fails.
+        if [ "$script_exit" -eq 2 ]; then
+            echo "SETUP FAILED in $script: its checks did not run"
             OVERALL_RESULT=1
         fi
     done
